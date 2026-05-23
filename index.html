@@ -2,14 +2,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🪿 Goose Migration Game</title>
+    <title>Goose Game</title>
     <link rel="stylesheet" href="static/css/style.css">
     
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🪿 Goose Migration Game</h1>
+            <h1> Goose Game</h1>
             <div class="stats">
                 <span id="score">Score: 0</span>
                 <span id="geese-count">🪿 Geese: 2</span>
@@ -74,6 +74,19 @@
             <button id="fastMigrateToggle" class="btn btn-action">Short Flight</button>
         </div>
 
+        <div class="sim-info-footer">
+            <h4>Stochastic Simulation Features</h4>
+            <p>This game uses <strong>Monte Carlo methods</strong> and <strong>geographic modeling</strong>:</p>
+            <ul>
+                <li>🪿 Latitude-based survival probabilities (like real goose migration!)</li>
+                <li>🗺️ Directional migration changes your location and climate zone</li>
+                <li>💕 Breeding success depends on energy levels and random chance</li>
+                <li>🎯 Predator attacks use distance-based probability calculations</li>
+                <li>⚡ Energy loss during migration with weather variance</li>
+                <li>⛈️ Random environmental events (storms) can strike anywhere</li>
+            </ul>
+        </div>
+
     </div>
 
     <!-- Difficulty Modal -->
@@ -108,34 +121,22 @@
             <ul>
                 <li>🌡️ <strong>Climate zones are <strong> crucial </strong> for survival</strong>. Harsher climates have lower survival rates:
                     <ul>
-                        <li>☀️ Temperate (30-50°N): <strong>Best survival rates (100%)</strong></li>
-                        <li>🌨️ Subarctic/Subtropical: <strong>Good (80-85%)</strong></li>
-                        <li>🌴 Tropical: <strong>Harsh (60-70%)</strong></li>
-                        <li>🧊 Arctic / Antarctic: <strong>Extreme (50%)</strong></li>
+                        <li>☀️ Temperate (30-50°N): <strong>Best survival rates</strong></li>
+                        <li>🌨️ Subarctic/Subtropical: <strong>Good climate for geese</strong></li>
+                        <li>🌴 Tropical: <strong>Harsh conditions</strong></li>
+                        <li>🧊 Arctic / Antarctic: <strong>Extreme conditions</strong></li>
                     </ul>
                 </li>
-                <li>🥚 Eggs hatch into goslings </li>
-                <li>🐥 Goslings grow into adult geese</li>
-                <li>🦊 Avoid foxes and eagles - predators hunt using stochastic pathfinding</li>
-                <li>💧 Ponds are safe zones for geese</li>
-                <li>🌳 Click individual geese or use "Hide" button to hide from predators</li>
-                <li>⚡ Energy affects survival. </li>
-                <li>💕 Use "Hatch" button to lay eggs. Hatching geese can't move. </li>
-                <li>🧭 <strong>Migrate North/South/East/West</strong> to move to a better habitat. Long flights deplete a lot of energy. </li>
-                <li>⛈️ Random storms can hit at any latitude</li>
+                <li>🐥 Eggs hatch into goslings </li>
+                <li>🪿 Goslings grow into adult geese</li>
+                <li>🦊 Avoid foxes and eagles - predators want to eat you! </li>
+                <li>🌳 Click individual geese or use "Hide" button to avoid predators</li>
+                <li>🐣 Use <strong>Hatch</strong> button to lay eggs. Hatching geese can't move. </li>
+                <li>🧭 <strong>Migrate</strong> with short or long flights to move to a better habitat. </li>
+                <li>⚡ <strong> Energy </strong> affects survival. Long flights deplete a lot of energy. </li>
+                <li>⛈️ Random storms can hit and affect survival </li>
+                <li></li>
             </ul>
-            <div class="modal-sim-box">
-                <h4> Stochastic Simulation Features:</h4>
-                <p>This game uses <strong>Monte Carlo methods</strong> and <strong>geographic modeling</strong>:</p>
-                <ul>
-                    <li>🪿 Latitude-based survival probabilities (like real goose migration!)</li>
-                    <li>🗺️ Directional migration changes your location and climate zone</li>
-                    <li>💕 Breeding success depends on energy levels and random chance</li>
-                    <li>🎯 Predator attacks use distance-based probability calculations</li>
-                    <li>⚡ Energy loss during migration with weather variance</li>
-                    <li>⛈️ Random environmental events (storms) can strike anywhere</li>
-                </ul>
-            </div>
             <button class="modal-start-btn" id="startGameBtn">Let's Go! 🪿</button>
         </div>
     </div>

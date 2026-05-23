@@ -104,7 +104,7 @@ window.addEventListener('load', () => {
         game.paused = true;
         if (afterReset) {
             game.reset();
-            document.getElementById('fastMigrateToggle').textContent = '🐢 Hopscotch';
+            document.getElementById('fastMigrateToggle').textContent = 'Short Flight';
         }
 
         const wrapper = document.querySelector('.game-wrapper');

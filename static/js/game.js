@@ -549,7 +549,7 @@ export class Game {
             }
         });
         if (hiddenCount > 0) {
-            this.logEvent(`🌳 ${hiddenCount} goose${hiddenCount > 1 ? 's' : ''} hiding in bushes!`, 'normal');
+            this.logEvent(`🌳 ${hiddenCount} ${hiddenCount > 1 ? 'geese' : 'goose'} hiding in bushes!`, 'normal');
         }
     }
 
@@ -663,7 +663,7 @@ export class Game {
         // Date
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const dateEl = document.getElementById('dateDisplay');
-        if (dateEl) dateEl.innerHTML = `<strong>${MONTHS[this.month]} W${this.week}</strong>`;
+        if (dateEl) dateEl.innerHTML = `<strong>${MONTHS[this.month]} Week ${this.week}</strong>`;
 
         // Avg Health (energy)
         const adults   = this.geese.filter(g => g.state === GooseState.ADULT);
