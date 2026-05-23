@@ -235,7 +235,7 @@ export class Game {
 
         if (this.weather === 'storm') {
             this.geese.forEach(g => {
-                const drain = g.hiding ? 5 : 15;
+                const drain = g.hiding ? 3 : 15;
                 g.energy = Math.max(5, g.energy - drain);
             });
             this.logEvent('⛈️ Storm saps the flock\'s health!', 'warning');
@@ -243,7 +243,7 @@ export class Game {
             let goslingsExposed = false;
             this.geese.forEach(g => {
                 if (g.state === GooseState.GOSLING) {
-                    const drain = g.hiding ? 3 : 10;
+                    const drain = 1;
                     g.energy = Math.max(5, g.energy - drain);
                     if (!g.hiding) goslingsExposed = true;
                 } else {
