@@ -3,11 +3,12 @@ let CANVAS_WIDTH = 1000;
 let CANVAS_HEIGHT = 600;
 const FPS = 60;
 
-// Function to get responsive canvas size
+// Function to get responsive canvas size — reads actual rendered width so pixel dims match CSS
 const getResponsiveCanvasSize = () => {
-    const maxWidth = Math.min(window.innerWidth * 0.9, 1000);
-    const maxHeight = Math.min(window.innerHeight * 0.65, 750);
-    return { width: maxWidth, height: maxHeight };
+    const canvas = document.getElementById('gameCanvas');
+    const width = canvas ? canvas.clientWidth : Math.min(window.innerWidth * 0.9, 1200);
+    const height = Math.min(Math.round(width * 0.6), Math.min(window.innerHeight * 0.65, 750));
+    return { width, height };
 };
 
 // Monte Carlo simulation parameters
@@ -1165,11 +1166,7 @@ window.addEventListener('load', () => {
     }
     gameLoop();
 
-    // Button handlers
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        game.reset();
-    });
-
+    // Button handlers (reset is wired in the modal flow below)
     document.getElementById('pauseBtn').addEventListener('click', () => {
         const paused = game.togglePause();
         document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
@@ -1243,18 +1240,15 @@ window.addEventListener('load', () => {
         game.hideAllGeese();
     });
     
-    // Difficulty toggle buttons
+    // Difficulty header buttons just update the active highlight (game change happens via popup)
     ['diffEasy', 'diffNormal', 'diffHard'].forEach(id => {
         document.getElementById(id).addEventListener('click', () => {
             const level = document.getElementById(id).dataset.diff;
             applyDifficulty(level);
-            // Update active state
             ['diffEasy', 'diffNormal', 'diffHard'].forEach(bid => {
                 document.getElementById(bid).classList.remove('btn-diff-active');
             });
             document.getElementById(id).classList.add('btn-diff-active');
-            // Reset game with new difficulty
-            game.reset();
         });
     });
     
@@ -1302,10 +1296,13 @@ window.addEventListener('load', () => {
         }
     });
 
-    // --- Instructions modal + countdown ---
+    // --- Instructions → Difficulty → Countdown flow ---
     game.paused = true;
 
-    function startCountdown() {
+    function startCountdown(afterReset) {
+        if (afterReset) game.reset();
+        game.paused = true;
+
         const wrapper = document.querySelector('.game-wrapper');
         const overlay = document.createElement('div');
         overlay.className = 'countdown-overlay';
@@ -1331,11 +1328,42 @@ window.addEventListener('load', () => {
         showNext();
     }
 
-    function closeModal() {
-        document.getElementById('instructionsModal').classList.add('hidden');
-        startCountdown();
+    function showDifficultyModal(afterReset) {
+        const modal = document.getElementById('difficultyModal');
+        modal.classList.remove('hidden');
+
+        // Replace listeners each time to avoid duplicates
+        const newModal = modal.cloneNode(true);
+        modal.parentNode.replaceChild(newModal, modal);
+
+        newModal.querySelectorAll('.diff-choice').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const level = btn.dataset.diff;
+                applyDifficulty(level);
+                // Sync header difficulty buttons
+                ['diffEasy', 'diffNormal', 'diffHard'].forEach(id => {
+                    document.getElementById(id).classList.remove('btn-diff-active');
+                });
+                const map = { easy: 'diffEasy', normal: 'diffNormal', hard: 'diffHard' };
+                document.getElementById(map[level]).classList.add('btn-diff-active');
+
+                newModal.classList.add('hidden');
+                startCountdown(afterReset);
+            });
+        });
     }
 
-    document.getElementById('closeModal').addEventListener('click', closeModal);
-    document.getElementById('startGameBtn').addEventListener('click', closeModal);
+    function closeInstructions() {
+        document.getElementById('instructionsModal').classList.add('hidden');
+        showDifficultyModal(false);
+    }
+
+    document.getElementById('closeModal').addEventListener('click', closeInstructions);
+    document.getElementById('startGameBtn').addEventListener('click', closeInstructions);
+
+    // Reset now shows difficulty popup instead of immediately resetting
+    document.getElementById('resetBtn').removeEventListener('click', () => game.reset());
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        showDifficultyModal(true);
+    });
 });

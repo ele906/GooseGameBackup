@@ -16,6 +16,12 @@
                 <span id="geese-count">🪿 Geese: 2</span>
                 <span id="time">⏱️ Time: 0s</span>
             </div>
+            <div class="difficulty-toggle header-difficulty">
+                <span class="difficulty-label">🎯 Difficulty:</span>
+                <button id="diffEasy" class="btn btn-diff btn-diff-easy" data-diff="easy">🌿 Easy</button>
+                <button id="diffNormal" class="btn btn-diff btn-diff-normal btn-diff-active" data-diff="normal">⚔️ Normal</button>
+                <button id="diffHard" class="btn btn-diff btn-diff-hard" data-diff="hard">🔥 Hard</button>
+            </div>
         </header>
 
         <div class="info-panel">
@@ -51,24 +57,39 @@
             <button id="fullscreenBtn" class="btn btn-special">⛶ Fullscreen</button>
             <button id="mateBtn" class="btn btn-action">💕 Mate</button>
             <button id="hideAllBtn" class="btn btn-action">🌳 Hide All Geese</button>
-            <div class="difficulty-toggle">
-                <span class="difficulty-label">🎯 Difficulty:</span>
-                <button id="diffEasy" class="btn btn-diff btn-diff-easy" data-diff="easy">🌿 Easy</button>
-                <button id="diffNormal" class="btn btn-diff btn-diff-normal btn-diff-active" data-diff="normal">⚔️ Normal</button>
-                <button id="diffHard" class="btn btn-diff btn-diff-hard" data-diff="hard">🔥 Hard</button>
-            </div>
         </div>
-        
-        <div class="migration-controls-wrapper">
-            <label>🧭 Migration Direction:</label>
-            <div class="migration-buttons">
-                <button id="migrateNorth" class="btn btn-direction" data-direction="north">⬆️ North</button>
-                <button id="migrateSouth" class="btn btn-direction" data-direction="south">⬇️ South</button>
-                <button id="migrateEast" class="btn btn-direction" data-direction="east">➡️ East</button>
-                <button id="migrateWest" class="btn btn-direction" data-direction="west">⬅️ West</button>
-            </div>
+        <div class="controls">
+            <span class="migration-inline-label">🧭 Migration:</span>
+            <button id="migrateNorth" class="btn btn-direction" data-direction="north">⬆️ North</button>
+            <button id="migrateSouth" class="btn btn-direction" data-direction="south">⬇️ South</button>
+            <button id="migrateEast" class="btn btn-direction" data-direction="east">➡️ East</button>
+            <button id="migrateWest" class="btn btn-direction" data-direction="west">⬅️ West</button>
         </div>
 
+    </div>
+
+    <!-- Difficulty Modal -->
+    <div class="modal-overlay hidden" id="difficultyModal">
+        <div class="modal-box diff-modal-box">
+            <h3>🎯 Choose Difficulty</h3>
+            <div class="diff-choices">
+                <button class="diff-choice diff-choice-easy" data-diff="easy">
+                    <span class="diff-choice-icon">🌿</span>
+                    <span class="diff-choice-name">Easy</span>
+                    <span class="diff-choice-desc">Fewer predators, lower catch rate</span>
+                </button>
+                <button class="diff-choice diff-choice-normal" data-diff="normal">
+                    <span class="diff-choice-icon">⚔️</span>
+                    <span class="diff-choice-name">Normal</span>
+                    <span class="diff-choice-desc">Balanced challenge</span>
+                </button>
+                <button class="diff-choice diff-choice-hard" data-diff="hard">
+                    <span class="diff-choice-icon">🔥</span>
+                    <span class="diff-choice-name">Hard</span>
+                    <span class="diff-choice-desc">More predators, ruthless hunting</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Instructions Modal -->

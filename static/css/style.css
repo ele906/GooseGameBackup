@@ -27,6 +27,11 @@ header {
     margin-bottom: 20px;
 }
 
+.header-difficulty {
+    justify-content: center;
+    margin-top: 10px;
+}
+
 .event-log {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     border: 2px solid #667eea;
@@ -91,6 +96,7 @@ h1 {
     justify-content: center;
     margin: 20px 0;
     position: relative;
+    width: 100%;
 }
 
 #gameCanvas {
@@ -99,9 +105,7 @@ h1 {
     background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
     cursor: pointer;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    max-width: 100%;
-    max-height: 65vh;
-    height: auto;
+    width: 100%;
     display: block;
 }
 
@@ -114,35 +118,11 @@ h1 {
     align-items: center;
 }
 
-.migration-controls-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.migration-controls-wrapper label {
+.migration-inline-label {
     font-weight: bold;
-    font-size: 1.1em;
+    font-size: 0.95em;
     color: #333;
-}
-
-.migration-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.migration-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border: 2px solid #667eea;
+    white-space: nowrap;
 }
 
 .btn {
@@ -399,6 +379,60 @@ h1 {
 .modal-start-btn:hover {
     background: #5568d4;
     transform: translateY(-2px);
+}
+
+/* Difficulty modal */
+.diff-modal-box {
+    max-width: 420px;
+    text-align: center;
+}
+
+.diff-modal-box h3 {
+    font-size: 1.4em;
+    margin-bottom: 20px;
+}
+
+.diff-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.diff-choice {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+}
+
+.diff-choice:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.diff-choice-easy  { background: #e8f8ef; border-color: #a8d8b8; }
+.diff-choice-normal{ background: #e8eef8; border-color: #a8b8d8; }
+.diff-choice-hard  { background: #f8e8e8; border-color: #d8a8a8; }
+
+.diff-choice-icon { font-size: 1.8em; flex-shrink: 0; }
+
+.diff-choice-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #222;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.diff-choice-desc {
+    font-size: 0.88em;
+    color: #666;
 }
 
 /* Countdown overlay on canvas */
