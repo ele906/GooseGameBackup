@@ -16,7 +16,7 @@ export class Pond {
 
 // type can be: 'bush' | 'bush2' | 'bush3' | 'cactus' | 'palm' | 'snow' | 'snow2'
 export class Bush {
-    constructor(x, y, radius = 40, type = 'bush') {
+    constructor(x, y, radius = 65, type = 'bush') {
         this.x = x; this.y = y; this.radius = radius; this.type = type;
     }
 

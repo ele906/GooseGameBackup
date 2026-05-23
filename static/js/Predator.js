@@ -8,11 +8,30 @@ export class Predator {
         this.vx      = Math.random() * 5 - 2.5;
         this.vy      = Math.random() * 5 - 2.5;
         this.facingLeft = true;
-        // 3 variants each: fox/fox2/fox3 and eagle/eagle2/eagle3
         this.variant = Math.floor(Math.random() * 3);
+        this.lifespan = 900 + Math.floor(Math.random() * 900); // 15–30 sec at 60fps
+        this.leaving  = false;
     }
 
     move(width, height, geese) {
+        if (this.leaving) {
+            // Flee toward nearest edge, ignoring boundary clamping
+            const edges = [
+                { dx: -1, dy:  0, dist: this.x },
+                { dx:  1, dy:  0, dist: width - this.x },
+                { dx:  0, dy: -1, dist: this.y },
+                { dx:  0, dy:  1, dist: height - this.y },
+            ];
+            edges.sort((a, b) => a.dist - b.dist);
+            this.vx = edges[0].dx * 3.5;
+            this.vy = edges[0].dy * 3.5;
+            this.x += this.vx;
+            this.y += this.vy;
+            if      (this.vx < -0.3) this.facingLeft = true;
+            else if (this.vx >  0.3) this.facingLeft = false;
+            return;
+        }
+
         const nearestGoose = this.findNearestGoose(geese);
         if (nearestGoose) {
             const distance = this.distance(nearestGoose);

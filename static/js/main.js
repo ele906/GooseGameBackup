@@ -64,6 +64,7 @@ window.addEventListener('load', () => {
     });
 
     document.getElementById('hideAllBtn').addEventListener('click', () => game.hideAllGeese());
+    document.getElementById('honkBtn').addEventListener('click', () => game.honk());
 
     function lockDiffButtons() { ['diffEasy', 'diffNormal', 'diffHard'].forEach(id => document.getElementById(id).disabled = true); }
     lockDiffButtons();

@@ -93,8 +93,36 @@ export class Game {
 
         this.fastMigration = false;
 
+        const ls = (src) => { const a = new Audio(src); a.preload = 'auto'; return a; };
+        this.sounds = {
+            honk:          ls('static/audio/honk.mp3'),
+            angryhonk:     ls('static/audio/angryhonk.mp3'),
+            angryhonk2:    ls('static/audio/angryhonk2.mp3'),
+            migrationhonk: ls('static/audio/migrationhonk.mp3'),
+        };
+
         this.init();
         canvas.addEventListener('click', (e) => this.handleClick(e));
+    }
+
+    playSound(name) {
+        try {
+            const s = this.sounds[name];
+            if (!s) return;
+            s.currentTime = 0;
+            s.play().catch(() => {});
+        } catch(e) {}
+    }
+
+    honk() {
+        if (this.paused) return;
+        this.playSound(Math.random() < 0.5 ? 'angryhonk' : 'angryhonk2');
+        let scared = 0;
+        this.predators.forEach(p => {
+            if (!p.leaving && Math.random() < 0.55) { p.leaving = true; scared++; }
+        });
+        if (scared > 0) this.logEvent(`📢 HONK! Scared off ${scared} predator${scared > 1 ? 's' : ''}!`, 'positive');
+        else            this.logEvent('📢 HONK! Predators unimpressed...', 'normal');
     }
 
     advanceWeek() {
@@ -117,6 +145,9 @@ export class Game {
         const r = Math.random();
         this.weather = r < 0.55 ? 'sunny' : r < 0.80 ? 'rain' : 'storm';
         this.weatherWeeksLeft = 2 + Math.floor(Math.random() * 5);
+        if (this.weather === 'storm') {
+            this.predators.forEach(p => { p.leaving = true; });
+        }
         const icons = { sunny: '☀️', rain: '🌧️', storm: '⛈️' };
         const names = { sunny: 'Sunny', rain: 'Rain', storm: 'Storm!' };
         this.logEvent(`${icons[this.weather]} Weather changed: ${names[this.weather]}`,
@@ -189,9 +220,14 @@ export class Game {
         const diff      = DIFFICULTY_SETTINGS[currentDifficulty];
         const types     = [PredatorType.FOX, PredatorType.EAGLE, PredatorType.FOX, PredatorType.EAGLE];
         const positions = [[100, 100], [900, 100], [500, 50], [200, 500]];
-        for (let i = 0; i < diff.startPredators; i++) {
-            this.predators.push(new Predator(types[i], positions[i][0], positions[i][1]));
-        }
+        this._spawnGen  = (this._spawnGen || 0) + 1;
+        const myGen     = this._spawnGen;
+        setTimeout(() => {
+            if (this._spawnGen !== myGen || this.gameOver) return;
+            for (let i = 0; i < diff.startPredators; i++) {
+                this.predators.push(new Predator(types[i], positions[i][0], positions[i][1]));
+            }
+        }, SIMULATION_PARAMS.SAFE_PERIOD_SECONDS * 1000);
     }
 
     handleClick(e) {
@@ -256,6 +292,18 @@ export class Game {
 
         this.geese.forEach(g => g.move(this.width, this.height));
         this.predators.forEach(p => p.move(this.width, this.height, this.geese));
+
+        // Age predators; remove ones that have fled off-screen
+        for (let i = this.predators.length - 1; i >= 0; i--) {
+            const p = this.predators[i];
+            if (!p.leaving) { p.lifespan--; if (p.lifespan <= 0) p.leaving = true; }
+            else if (p.x < -80 || p.x > this.width + 80 || p.y < -80 || p.y > this.height + 80) {
+                this.predators.splice(i, 1);
+            }
+        }
+
+        // Random ambient honk
+        if (Math.random() < 0.0008) this.playSound('honk');
 
         if (!this.safeMode) {
             for (let i = this.geese.length - 1; i >= 0; i--) {
@@ -412,6 +460,7 @@ export class Game {
     }
 
     triggerMigration(direction) {
+        this.playSound('migrationhonk');
         this.migrationActive    = true;
         this.migrationDirection = direction;
 
@@ -517,7 +566,7 @@ export class Game {
             ));
         }
 
-        const vegRadii = { bush: 50, bush2: 50, bush3: 50, cactus: 45, palm: 55, snow: 70, snow2: 70 };
+        const vegRadii = { bush: 65, bush2: 65, bush3: 65, cactus: 55, palm: 70, snow: 85, snow2: 85 };
         const numVeg = 4 + Math.floor(Math.random() * 4);
         for (let i = 0; i < numVeg; i++) {
             const type   = vegTypes[Math.floor(Math.random() * vegTypes.length)];
@@ -634,10 +683,10 @@ export class Game {
     }
 
     updateUI() {
-        document.getElementById('score').textContent       = `Score: ${this.score}`;
-        document.getElementById('geese-count').textContent = `Geese: ${this.geese.length}`;
         const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
-        document.getElementById('time').textContent = `Time: ${elapsed}s`;
+        const scoreEl = document.getElementById('score'); if (scoreEl) scoreEl.textContent = `Score: ${this.score}`;
+        const countEl = document.getElementById('geese-count'); if (countEl) countEl.textContent = `Geese: ${this.geese.length}`;
+        const timeEl  = document.getElementById('time'); if (timeEl) timeEl.textContent = `Time: ${elapsed}s`;
 
         const latDir  = this.latitude  >= 0 ? 'N' : 'S';
         const longDir = this.longitude >= 0 ? 'E' : 'W';
