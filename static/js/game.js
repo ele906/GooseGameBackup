@@ -113,8 +113,13 @@ export class Game {
             wind:   ls('static/audio/wind.mp3'),
             storm:  ls('static/audio/storm.mp3'),
             storm2: ls('static/audio/storm2.mp3'),
+            // bgm
+            bgmEasy: ls('static/audio/bgm-easy.mp3'),
+            bgmMed:  ls('static/audio/bgm-med.mp3'),
+            bgmHard: ls('static/audio/bgm-hard.mp3'),
         };
         this.ambientAudio   = null;
+        this.bgmAudio       = null;
         this.ambientStarted = false;
 
         this.init();
@@ -159,6 +164,26 @@ export class Game {
         else                               this.stopAmbient();
     }
 
+    startBGM() {
+        const map = { easy: 'bgmEasy', normal: 'bgmMed', hard: 'bgmHard' };
+        const s = this.sounds[map[currentDifficulty] || 'bgmMed'];
+        if (!s) return;
+        if (this.bgmAudio) { this.bgmAudio.pause(); this.bgmAudio.currentTime = 0; }
+        s.loop = true;
+        s.volume = 0.45;
+        s.currentTime = 0;
+        s.play().catch(() => {});
+        this.bgmAudio = s;
+    }
+
+    stopBGM() {
+        if (this.bgmAudio) {
+            this.bgmAudio.pause();
+            this.bgmAudio.currentTime = 0;
+            this.bgmAudio = null;
+        }
+    }
+
     honk() {
         if (this.paused) return;
         this.playSound(`angryhonk${1 + Math.floor(Math.random() * 5)}`);
@@ -179,10 +204,23 @@ export class Game {
         if (this.weatherWeeksLeft <= 0) this.changeWeather();
 
         if (this.weather === 'storm') {
-            this.geese.forEach(g => { g.energy = Math.max(5, g.energy - 15); });
+            this.geese.forEach(g => {
+                const drain = g.hiding ? 5 : 15;
+                g.energy = Math.max(5, g.energy - drain);
+            });
             this.logEvent('⛈️ Storm saps the flock\'s energy!', 'warning');
         } else if (this.weather === 'rain') {
-            this.geese.forEach(g => { g.energy = Math.max(20, g.energy - 5); });
+            let goslingsExposed = false;
+            this.geese.forEach(g => {
+                if (g.state === GooseState.GOSLING) {
+                    const drain = g.hiding ? 3 : 10;
+                    g.energy = Math.max(5, g.energy - drain);
+                    if (!g.hiding) goslingsExposed = true;
+                } else {
+                    g.energy = Math.max(20, g.energy - 5);
+                }
+            });
+            if (goslingsExposed) this.logEvent('🌧️ Goslings struggling in the rain! Hide them!', 'warning');
         }
 
         // Overpopulation — vegetation depletion
@@ -292,6 +330,10 @@ export class Game {
         for (const goose of this.geese) {
             const dx = x - goose.x, dy = y - goose.y;
             if (Math.sqrt(dx * dx + dy * dy) < 50) {
+                if (goose.hatching) {
+                    this.logEvent('🥚 Can\'t move — sitting on eggs!', 'warning');
+                    break;
+                }
                 let nearestBush = null, minDist = Infinity;
                 for (const bush of this.bushes) {
                     const dist = Math.sqrt((bush.x - goose.x) ** 2 + (bush.y - goose.y) ** 2);
@@ -365,8 +407,8 @@ export class Game {
             }
         }
 
-        // Start ambient once the game is running
-        if (!this.ambientStarted) { this.ambientStarted = true; this.startAmbientForWeather(); }
+        // Start ambient + BGM once the game is running
+        // if (!this.ambientStarted) { this.ambientStarted = true; this.startAmbientForWeather(); this.startBGM(); }
 
         // Random ambient honks
         if (Math.random() < 0.0008) this.playSound('honk');
@@ -501,8 +543,8 @@ export class Game {
             for (let i = 0; i < clutchSize; i++) {
                 const egg = new Goose(
                     GooseState.EGG, 0,
-                    mother.x + (Math.random() * 120 - 60),
-                    mother.y + (Math.random() * 120 - 60),
+                    mother.x + (Math.random() * 30 - 15),
+                    mother.y + (Math.random() * 30 - 15),
                     Math.random() < 0.5 ? 'male' : 'female',
                     mother
                 );
@@ -669,6 +711,7 @@ export class Game {
         let hiddenCount = 0;
         this.geese.forEach(goose => {
             if (goose.state === GooseState.EGG) return;
+            if (goose.hatching) return; // can't leave the nest
             let nearestBush = null, minDist = Infinity;
             for (const bush of this.bushes) {
                 const dist = Math.sqrt((bush.x - goose.x) ** 2 + (bush.y - goose.y) ** 2);
@@ -849,6 +892,7 @@ export class Game {
         this.weeksAtLocation  = 0;
         this.vegWarnThreshold = 4 + Math.floor(Math.random() * 5);
         this.stopAmbient();
+        this.stopBGM();
         this.ambientStarted = false;
         this.eventLog = [];
         this.logEvent('🎮 Game started! Safe period: 10 seconds', 'positive');
@@ -861,8 +905,10 @@ export class Game {
         this.manuallyPaused = this.paused;
         if (this.paused) {
             if (this.ambientAudio) this.ambientAudio.pause();
+            if (this.bgmAudio)     this.bgmAudio.pause();
         } else {
             if (this.ambientAudio) this.ambientAudio.play().catch(() => {});
+            if (this.bgmAudio)     this.bgmAudio.play().catch(() => {});
         }
         return this.paused;
     }

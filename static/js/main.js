@@ -82,18 +82,38 @@ window.addEventListener('load', () => {
     window.addEventListener('keydown', (e) => {
         if (game.paused) return;
         const moveSpeed = 15;
+        const movable = game.geese.filter(g => g.state !== GooseState.EGG && !g.hatching);
+        if (!movable.length) return;
+
+        // Flock centroid — stragglers get extra pull toward the center
+        const cx = movable.reduce((s, g) => s + g.x, 0) / movable.length;
+        const cy = movable.reduce((s, g) => s + g.y, 0) / movable.length;
+        const cohesion = 0.35; // how strongly outliers are pulled in
+
         switch (e.key) {
             case 'ArrowUp':
-                game.geese.forEach(g => { if (g.state !== GooseState.EGG && !g.hatching) g.y = Math.max(50, g.y - moveSpeed); });
+                movable.forEach(g => {
+                    const pull = Math.max(0, g.y - cy) * cohesion;
+                    g.y = Math.max(50, g.y - (moveSpeed + pull));
+                });
                 e.preventDefault(); break;
             case 'ArrowDown':
-                game.geese.forEach(g => { if (g.state !== GooseState.EGG && !g.hatching) g.y = Math.min(game.height - 50, g.y + moveSpeed); });
+                movable.forEach(g => {
+                    const pull = Math.max(0, cy - g.y) * cohesion;
+                    g.y = Math.min(game.height - 50, g.y + (moveSpeed + pull));
+                });
                 e.preventDefault(); break;
             case 'ArrowLeft':
-                game.geese.forEach(g => { if (g.state !== GooseState.EGG && !g.hatching) g.x = Math.max(50, g.x - moveSpeed); });
+                movable.forEach(g => {
+                    const pull = Math.max(0, g.x - cx) * cohesion;
+                    g.x = Math.max(50, g.x - (moveSpeed + pull));
+                });
                 e.preventDefault(); break;
             case 'ArrowRight':
-                game.geese.forEach(g => { if (g.state !== GooseState.EGG && !g.hatching) g.x = Math.min(game.width - 50, g.x + moveSpeed); });
+                movable.forEach(g => {
+                    const pull = Math.max(0, cx - g.x) * cohesion;
+                    g.x = Math.min(game.width - 50, g.x + (moveSpeed + pull));
+                });
                 e.preventDefault(); break;
         }
     });
@@ -103,11 +123,11 @@ window.addEventListener('load', () => {
 
     function startCountdown(afterReset) {
         game.paused = true;
+
         if (afterReset) {
             game.reset();
             document.getElementById('fastMigrateToggle').textContent = 'Short Flight';
         } else {
-            // First start: difficulty was just chosen, re-roll location to match it
             const loc = game.randomStartLocation();
             game.latitude  = loc.lat;
             game.longitude = loc.lng;
@@ -116,6 +136,11 @@ window.addEventListener('load', () => {
             game.updateUI();
         }
 
+        // THIS IS THE OTHER JOB
+        game.startBGM();
+        game.startAmbientForWeather();
+        game.ambientStarted = true;
+
         const wrapper = document.querySelector('.game-wrapper');
         const overlay = document.createElement('div');
         overlay.className = 'countdown-overlay';
@@ -123,8 +148,10 @@ window.addEventListener('load', () => {
 
         const counts = ['3', '2', '1', 'GO!'];
         let i = 0;
+
         function showNext() {
             overlay.innerHTML = '';
+
             if (i >= counts.length) {
                 overlay.remove();
                 game.paused = false;
@@ -132,13 +159,16 @@ window.addEventListener('load', () => {
                 lockDiffButtons();
                 return;
             }
+
             const el = document.createElement('div');
             el.className   = 'countdown-number';
             el.textContent = counts[i];
             overlay.appendChild(el);
+
             i++;
             setTimeout(showNext, 900);
         }
+
         showNext();
     }
 

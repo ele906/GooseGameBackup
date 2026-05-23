@@ -63,6 +63,7 @@ export class Goose {
 
     move(width, height) {
         if (this.state === GooseState.EGG) return;
+        if (this.hiding)  return; // frozen while hiding in bush
         if (this.hatching) return; // mother stays on nest
 
         if (this.migrating && this.migrationTarget) {
