@@ -106,6 +106,14 @@ window.addEventListener('load', () => {
         if (afterReset) {
             game.reset();
             document.getElementById('fastMigrateToggle').textContent = 'Short Flight';
+        } else {
+            // First start: difficulty was just chosen, re-roll location to match it
+            const loc = game.randomStartLocation();
+            game.latitude  = loc.lat;
+            game.longitude = loc.lng;
+            game.vegWarnThreshold = 4 + Math.floor(Math.random() * 5);
+            game.regenerateTerrain();
+            game.updateUI();
         }
 
         const wrapper = document.querySelector('.game-wrapper');

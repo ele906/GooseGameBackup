@@ -35,6 +35,10 @@ export class Goose {
         this.adultVariant = Math.floor(Math.random() * 2);
         this.hatching = false; // true when sitting on a nest of eggs
 
+        // Personal scatter offset so goslings don't all stack on the parent
+        this.flockOffsetX = (Math.random() - 0.5) * 80;
+        this.flockOffsetY = (Math.random() - 0.5) * 80;
+
         this.baseEggSurvival = state === GooseState.EGG
             ? clamp(randomNormal(SIMULATION_PARAMS.EGG_SURVIVAL_MEAN, SIMULATION_PARAMS.EGG_SURVIVAL_STDDEV), 0.3, 1.0)
             : 1.0;
@@ -79,10 +83,12 @@ export class Goose {
                 this.energy = Math.min(100, this.energy + 20);
             }
         } else if (this.state === GooseState.GOSLING && this.parent) {
-            const dx = this.parent.x - this.x;
-            const dy = this.parent.y - this.y;
-            this.vx = dx / 15 + Math.random() * 0.4 - 0.2;
-            this.vy = dy / 15 + Math.random() * 0.4 - 0.2;
+            const targetX = this.parent.x + this.flockOffsetX;
+            const targetY = this.parent.y + this.flockOffsetY;
+            const dx = targetX - this.x;
+            const dy = targetY - this.y;
+            this.vx = dx / 20 + Math.random() * 0.6 - 0.3;
+            this.vy = dy / 20 + Math.random() * 0.6 - 0.3;
         } else {
             if (Math.random() < 0.05) {
                 this.vx += Math.random() - 0.5;
@@ -91,7 +97,7 @@ export class Goose {
             if (this.energy < 100) this.energy += 0.05;
         }
 
-        const maxSpeed = this.state === GooseState.GOSLING ? 0.4 : 0.9;
+        const maxSpeed = this.state === GooseState.GOSLING ? 0.7 : 0.9;
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > maxSpeed) {
             this.vx = (this.vx / speed) * maxSpeed;

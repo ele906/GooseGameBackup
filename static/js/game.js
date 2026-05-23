@@ -61,8 +61,7 @@ export class Game {
         this.manuallyPaused = false;
         this.startTime      = Date.now();
 
-        this.safeMode        = true;
-        this.safeModeEndTime = Date.now() + SIMULATION_PARAMS.SAFE_PERIOD_SECONDS * 1000;
+        this.safeMode = true;
 
         this.eventLog      = [];
         this.maxLogEntries = 5;
@@ -91,7 +90,9 @@ export class Game {
         this.lightningX      = 0;
         this.lightningPoints = [];
 
-        this.fastMigration = false;
+        this.fastMigration   = false;
+        this.weeksAtLocation    = 0;
+        this.vegWarnThreshold   = 4 + Math.floor(Math.random() * 5); // 4–8, mean 6
 
         const ls = (src) => { const a = new Audio(src); a.preload = 'auto'; return a; };
         this.sounds = {
@@ -183,6 +184,24 @@ export class Game {
         } else if (this.weather === 'rain') {
             this.geese.forEach(g => { g.energy = Math.max(20, g.energy - 5); });
         }
+
+        // Overpopulation — vegetation depletion
+        const adultCount = this.geese.filter(g => g.state === GooseState.ADULT).length;
+        if (adultCount >= 4) {
+            this.weeksAtLocation++;
+            const w = this.vegWarnThreshold;
+            if (this.weeksAtLocation === w) {
+                this.logEvent('🌿 Vegetation getting sparse — consider migrating!', 'warning');
+            } else if (this.weeksAtLocation === w + 3) {
+                this.logEvent('🌿 Habitat nearly stripped! Migrate or health will suffer!', 'important');
+            } else if (this.weeksAtLocation > w + 3) {
+                const drain = Math.min(10, 3 + (this.weeksAtLocation - (w + 3)));
+                this.geese.forEach(g => { g.energy = Math.max(5, g.energy - drain); });
+                this.logEvent(`🍂 Overgrazed habitat! −${drain} energy per goose. Migrate now!`, 'important');
+            }
+        } else {
+            if (this.weeksAtLocation > 0) this.weeksAtLocation = Math.max(0, this.weeksAtLocation - 1);
+        }
     }
 
     changeWeather() {
@@ -262,17 +281,7 @@ export class Game {
         this.bushes.push(new Bush(600, 300));
         this.bushes.push(new Bush(900, 150));
 
-        const diff      = DIFFICULTY_SETTINGS[currentDifficulty];
-        const types     = [PredatorType.FOX, PredatorType.EAGLE, PredatorType.FOX, PredatorType.EAGLE];
-        const positions = [[100, 100], [900, 100], [500, 50], [200, 500]];
-        this._spawnGen  = (this._spawnGen || 0) + 1;
-        const myGen     = this._spawnGen;
-        setTimeout(() => {
-            if (this._spawnGen !== myGen || this.gameOver) return;
-            for (let i = 0; i < diff.startPredators; i++) {
-                this.predators.push(new Predator(types[i], positions[i][0], positions[i][1]));
-            }
-        }, SIMULATION_PARAMS.SAFE_PERIOD_SECONDS * 1000);
+        this.initialPredatorsSpawned = false;
     }
 
     handleClick(e) {
@@ -306,8 +315,17 @@ export class Game {
 
         this.gameTime++;
 
-        if (this.safeMode && Date.now() >= this.safeModeEndTime) {
+        if (this.safeMode && this.gameTime >= SIMULATION_PARAMS.SAFE_PERIOD_SECONDS * 60) {
             this.safeMode = false;
+            if (!this.initialPredatorsSpawned) {
+                this.initialPredatorsSpawned = true;
+                const diff      = DIFFICULTY_SETTINGS[currentDifficulty];
+                const types     = [PredatorType.FOX, PredatorType.EAGLE, PredatorType.FOX, PredatorType.EAGLE];
+                const positions = [[100, 100], [900, 100], [500, 50], [200, 500]];
+                for (let i = 0; i < diff.startPredators; i++) {
+                    this.predators.push(new Predator(types[i], positions[i][0], positions[i][1]));
+                }
+            }
             this.logEvent('⚠️ Safe period over! Predators are now active!', 'warning');
         }
 
@@ -347,6 +365,9 @@ export class Game {
             }
         }
 
+        // Start ambient once the game is running
+        if (!this.ambientStarted) { this.ambientStarted = true; this.startAmbientForWeather(); }
+
         // Random ambient honks
         if (Math.random() < 0.0008) this.playSound('honk');
         if (Math.random() < 0.0004) this.playSound('happyhonk');
@@ -356,6 +377,7 @@ export class Game {
                 const goose = this.geese[i];
                 for (const predator of this.predators) {
                     if (predator.canAttack(goose) && goose.state !== GooseState.EGG) {
+                        if (predator.type === PredatorType.EAGLE) this.playSound('eagle');
                         const name = goose.state === GooseState.GOSLING ? 'gosling' : 'goose';
                         this.logEvent(`🦊 A ${predator.type} ate a ${name}!`, 'important');
                         this.geese.splice(i, 1);
@@ -396,6 +418,7 @@ export class Game {
                 else if (edge === 2) { x = Math.random() * this.width;  y = this.height; }
                 else                 { x = 0; y = Math.random() * this.height; }
                 this.predators.push(new Predator(type, x, y));
+                if (type === PredatorType.EAGLE) this.playSound('eagle');
                 this.logEvent(`⚠️ New ${type} appeared! (${gooseCount} geese attracted predators)`, 'warning');
             }
         }
@@ -455,12 +478,12 @@ export class Game {
         const females = allFemales.filter(g => g.energy > 50);
 
         if (allMales.length === 0 || allFemales.length === 0) {
-            const missing = allMales.length === 0 ? 'males' : 'females';
+            const missing = allMales.length === 0 ? 'goose' : 'gander';
             this.logEvent(`💔 Hatch failed — no adult ${missing} in the flock`, 'warning');
             return;
         }
         if (males.length === 0 || females.length === 0) {
-            const who = males.length === 0 ? 'males' : 'females';
+            const who = males.length === 0 ? 'gander' : 'goose';
             this.logEvent(`💔 Hatch failed — ${who} too exhausted (energy < 50%)`, 'warning');
             return;
         }
@@ -520,7 +543,7 @@ export class Game {
     }
 
     triggerMigration(direction) {
-        this.playSound('migrationhonk');
+        this.playSound(Math.random() < 0.5 ? 'migrationhonk' : 'migrationhonk2');
         this.migrationActive    = true;
         this.migrationDirection = direction;
 
@@ -602,6 +625,8 @@ export class Game {
             this.paused = false;
             this.latitude               = parseFloat(newLat.toFixed(1));
             this.longitude              = parseFloat(newLong.toFixed(1));
+            this.weeksAtLocation        = 0;
+            this.vegWarnThreshold       = 4 + Math.floor(Math.random() * 5);
             this.geese.forEach(g => { g.survivalChance = g.calculateSurvivalChance(); });
             this.regenerateTerrain();
             this.advanceWeek();
@@ -813,15 +838,18 @@ export class Game {
         this.breedingCooldown = 0;
         this.totalBorn = 2;
         this.totalDied = 0;
-        this.safeMode        = true;
-        this.safeModeEndTime = Date.now() + SIMULATION_PARAMS.SAFE_PERIOD_SECONDS * 1000;
+        this.safeMode = true;
         this.month = Math.floor(Math.random() * 12);
         this.week  = Math.floor(Math.random() * 4) + 1;
         this.weather          = 'sunny';
         this.weatherWeeksLeft = 3 + Math.floor(Math.random() * 4);
         this.stormShakeX = 0; this.stormShakeY = 0;
         this.lightningFlash = 0; this.lightningPoints = [];
-        this.fastMigration = false;
+        this.fastMigration    = false;
+        this.weeksAtLocation  = 0;
+        this.vegWarnThreshold = 4 + Math.floor(Math.random() * 5);
+        this.stopAmbient();
+        this.ambientStarted = false;
         this.eventLog = [];
         this.logEvent('🎮 Game started! Safe period: 10 seconds', 'positive');
         this.init();
@@ -831,6 +859,11 @@ export class Game {
     togglePause() {
         this.paused         = !this.paused;
         this.manuallyPaused = this.paused;
+        if (this.paused) {
+            if (this.ambientAudio) this.ambientAudio.pause();
+        } else {
+            if (this.ambientAudio) this.ambientAudio.play().catch(() => {});
+        }
         return this.paused;
     }
 }
