@@ -91,12 +91,12 @@ export class Goose {
             this.vx = dx / 20 + Math.random() * 0.6 - 0.3;
             this.vy = dy / 20 + Math.random() * 0.6 - 0.3;
         } else {
-            if (Math.random() < 0.04) {
-                this.vx += Math.random() * 0.12 - 0.06;
-                this.vy += Math.random() * 0.12 - 0.06;
+            if (Math.random() < 0.06) {
+                this.vx += Math.random() * 0.14 - 0.07;
+                this.vy += Math.random() * 0.14 - 0.07;
             }
-            this.vx *= 0.98;
-            this.vy *= 0.98;
+            this.vx *= 0.995;
+            this.vy *= 0.995;
             const regenRate = currentDifficulty === 'hard' ? 0.03 : currentDifficulty === 'normal' ? 0.07 : 0.1;
             if (this.energy < 100) this.energy = Math.min(100, this.energy + regenRate);
         }

@@ -117,7 +117,10 @@ export class Game {
             // bgm
             bgmEasy: ls('static/audio/bgm-easy.mp3'),
             bgmMed:  ls('static/audio/bgm-med.mp3'),
-            bgmHard: ls('static/audio/bgm-hard.mp3'),
+            bgmHard:   ls('static/audio/bgm-hard.mp3'),
+            goodnews:  ls('static/audio/goodnews.mp3'),
+            warning:   ls('static/audio/warning.mp3'),
+            alert:     ls('static/audio/alert.mp3'),
         };
         this.ambientAudio   = null;
         this.bgmAudio       = null;
@@ -626,6 +629,9 @@ export class Game {
         this.eventLog.push({ message, type, time: Date.now() });
         if (this.eventLog.length > this.maxLogEntries) this.eventLog.shift();
         this.updateEventLog();
+        if (type === 'positive')  this.playSound('goodnews');
+        else if (type === 'warning')   this.playSound('warning');
+        else if (type === 'important') this.playSound('alert');
     }
 
     updateEventLog() {
