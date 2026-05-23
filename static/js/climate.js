@@ -20,6 +20,5 @@ export function getClimateZone(latitude) {
 export function getVegTypes(absLat) {
     if (absLat >= 50) return ['snow', 'snow2'];
     if (absLat >= 30) return ['bush', 'bush2', 'bush3'];
-    if (absLat >= 15) return ['cactus'];
     return ['palm'];
 }

@@ -95,11 +95,26 @@ export class Game {
 
         const ls = (src) => { const a = new Audio(src); a.preload = 'auto'; return a; };
         this.sounds = {
-            honk:          ls('static/audio/honk.mp3'),
-            angryhonk:     ls('static/audio/angryhonk.mp3'),
-            angryhonk2:    ls('static/audio/angryhonk2.mp3'),
-            migrationhonk: ls('static/audio/migrationhonk.mp3'),
+            honk:           ls('static/audio/honk.mp3'),
+            happyhonk:      ls('static/audio/happyhonk.mp3'),
+            migrationhonk:  ls('static/audio/migrationhonk.mp3'),
+            migrationhonk2: ls('static/audio/migrationhonk2.mp3'),
+            eagle:          ls('static/audio/eagle.mp3'),
+            angryhonk1:     ls('static/audio/angryhonk1.mp3'),
+            angryhonk2:     ls('static/audio/angryhonk2.mp3'),
+            angryhonk3:     ls('static/audio/angryhonk3.mp3'),
+            angryhonk4:     ls('static/audio/angryhonk4.mp3'),
+            angryhonk5:     ls('static/audio/angryhonk5.mp3'),
+            // ambient loops
+            sunny:  ls('static/audio/sunny.mp3'),
+            sunny2: ls('static/audio/sunny2.mp3'),
+            rain:   ls('static/audio/rain.mp3'),
+            wind:   ls('static/audio/wind.mp3'),
+            storm:  ls('static/audio/storm.mp3'),
+            storm2: ls('static/audio/storm2.mp3'),
         };
+        this.ambientAudio   = null;
+        this.ambientStarted = false;
 
         this.init();
         canvas.addEventListener('click', (e) => this.handleClick(e));
@@ -114,9 +129,38 @@ export class Game {
         } catch(e) {}
     }
 
+    startAmbient(name) {
+        if (this.ambientAudio) {
+            this.ambientAudio.pause();
+            this.ambientAudio.currentTime = 0;
+        }
+        const s = this.sounds[name];
+        if (!s) { this.ambientAudio = null; return; }
+        s.loop = true;
+        s.volume = 0.35;
+        s.currentTime = 0;
+        s.play().catch(() => {});
+        this.ambientAudio = s;
+    }
+
+    stopAmbient() {
+        if (this.ambientAudio) {
+            this.ambientAudio.pause();
+            this.ambientAudio.currentTime = 0;
+            this.ambientAudio = null;
+        }
+    }
+
+    startAmbientForWeather() {
+        if      (this.weather === 'sunny') this.startAmbient(Math.random() < 0.5 ? 'sunny' : 'sunny2');
+        else if (this.weather === 'rain')  this.startAmbient('rain');
+        else if (this.weather === 'storm') this.startAmbient(Math.random() < 0.5 ? 'storm' : 'storm2');
+        else                               this.stopAmbient();
+    }
+
     honk() {
         if (this.paused) return;
-        this.playSound(Math.random() < 0.5 ? 'angryhonk' : 'angryhonk2');
+        this.playSound(`angryhonk${1 + Math.floor(Math.random() * 5)}`);
         let scared = 0;
         this.predators.forEach(p => {
             if (!p.leaving && Math.random() < 0.55) { p.leaving = true; scared++; }
@@ -148,6 +192,7 @@ export class Game {
         if (this.weather === 'storm') {
             this.predators.forEach(p => { p.leaving = true; });
         }
+        this.startAmbientForWeather();
         const icons = { sunny: '☀️', rain: '🌧️', storm: '⛈️' };
         const names = { sunny: 'Sunny', rain: 'Rain', storm: 'Storm!' };
         this.logEvent(`${icons[this.weather]} Weather changed: ${names[this.weather]}`,
@@ -302,8 +347,9 @@ export class Game {
             }
         }
 
-        // Random ambient honk
+        // Random ambient honks
         if (Math.random() < 0.0008) this.playSound('honk');
+        if (Math.random() < 0.0004) this.playSound('happyhonk');
 
         if (!this.safeMode) {
             for (let i = this.geese.length - 1; i >= 0; i--) {
@@ -398,42 +444,56 @@ export class Game {
     }
 
     breed() {
-        if (this.breedingCooldown > 0) return;
-
-        const males   = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'male'   && g.energy > 50);
-        const females = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'female' && g.energy > 50);
-
-        if (males.length > 0 && females.length > 0) {
-            const breedingSuccess = clamp(
-                randomNormal(SIMULATION_PARAMS.BREEDING_SUCCESS_MEAN, SIMULATION_PARAMS.BREEDING_SUCCESS_STDDEV),
-                0.2, 1.0
-            );
-            if (Math.random() < breedingSuccess) {
-                const mother = females[Math.floor(Math.random() * females.length)];
-                const clutchSize = Math.round(clamp(
-                    randomNormal(SIMULATION_PARAMS.CLUTCH_SIZE_MEAN, SIMULATION_PARAMS.CLUTCH_SIZE_STDDEV),
-                    SIMULATION_PARAMS.CLUTCH_SIZE_MIN, SIMULATION_PARAMS.CLUTCH_SIZE_MAX
-                ));
-                for (let i = 0; i < clutchSize; i++) {
-                    const egg = new Goose(
-                        GooseState.EGG, 0,
-                        mother.x + (Math.random() * 120 - 60),
-                        mother.y + (Math.random() * 120 - 60),
-                        Math.random() < 0.5 ? 'male' : 'female',
-                        mother
-                    );
-                    egg.game = this;
-                    this.geese.push(egg);
-                    this.totalBorn++;
-                }
-                this.logEvent(`💕 Hatching successful! ${clutchSize} egg${clutchSize > 1 ? 's' : ''} laid`, 'positive');
-                mother.energy -= 15;
-                mother.hatching = true;
-            } else {
-                this.logEvent(`💔 Hatching attempt failed`, 'warning');
-            }
-            this.breedingCooldown = SIMULATION_PARAMS.BREEDING_COOLDOWN;
+        if (this.breedingCooldown > 0) {
+            this.logEvent(`⏳ Hatching on cooldown — wait a bit longer`, 'warning');
+            return;
         }
+
+        const allMales   = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'male');
+        const allFemales = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'female');
+        const males   = allMales.filter(g => g.energy > 50);
+        const females = allFemales.filter(g => g.energy > 50);
+
+        if (allMales.length === 0 || allFemales.length === 0) {
+            const missing = allMales.length === 0 ? 'males' : 'females';
+            this.logEvent(`💔 Hatch failed — no adult ${missing} in the flock`, 'warning');
+            return;
+        }
+        if (males.length === 0 || females.length === 0) {
+            const who = males.length === 0 ? 'males' : 'females';
+            this.logEvent(`💔 Hatch failed — ${who} too exhausted (energy < 50%)`, 'warning');
+            return;
+        }
+
+        const breedingSuccess = clamp(
+            randomNormal(SIMULATION_PARAMS.BREEDING_SUCCESS_MEAN, SIMULATION_PARAMS.BREEDING_SUCCESS_STDDEV),
+            0.2, 1.0
+        );
+        if (Math.random() < breedingSuccess) {
+            const mother = females[Math.floor(Math.random() * females.length)];
+            const clutchSize = Math.round(clamp(
+                randomNormal(SIMULATION_PARAMS.CLUTCH_SIZE_MEAN, SIMULATION_PARAMS.CLUTCH_SIZE_STDDEV),
+                SIMULATION_PARAMS.CLUTCH_SIZE_MIN, SIMULATION_PARAMS.CLUTCH_SIZE_MAX
+            ));
+            for (let i = 0; i < clutchSize; i++) {
+                const egg = new Goose(
+                    GooseState.EGG, 0,
+                    mother.x + (Math.random() * 120 - 60),
+                    mother.y + (Math.random() * 120 - 60),
+                    Math.random() < 0.5 ? 'male' : 'female',
+                    mother
+                );
+                egg.game = this;
+                this.geese.push(egg);
+                this.totalBorn++;
+            }
+            this.logEvent(`💕 Hatching successful! ${clutchSize} egg${clutchSize > 1 ? 's' : ''} laid`, 'positive');
+            mother.energy -= 15;
+            mother.hatching = true;
+        } else {
+            this.logEvent(`💔 Hatch failed — bad luck this time`, 'warning');
+        }
+        this.breedingCooldown = SIMULATION_PARAMS.BREEDING_COOLDOWN;
     }
 
     forceMating() {
