@@ -16,6 +16,9 @@
                 <button id="diffEasy" class="btn btn-diff btn-diff-easy" data-diff="easy">🌱 Easy</button>
                 <button id="diffNormal" class="btn btn-diff btn-diff-normal btn-diff-active" data-diff="normal">✨ Normal</button>
                 <button id="diffHard" class="btn btn-diff btn-diff-hard" data-diff="hard">🔥 Hard</button>
+                <span style="display:inline-block;width:16px;"></span>
+                <button id="fullscreenBtn" class="btn btn-special">⛶ Fullscreen</button>
+                <button id="leaderboardBtn" class="btn">Leaderboard</button>
             </div>
         </header>
 
@@ -57,18 +60,19 @@
         <div class="controls">
             <button id="resetBtn" class="btn"> Restart</button>
             <button id="pauseBtn" class="btn"> Pause</button>
-            <button id="fullscreenBtn" class="btn btn-special">⛶ Fullscreen</button>
+            <button id="exitGameBtn" class="btn">Quit</button>
+            <span style="display:inline-block;width:16px;border-left:2px solid #ccc;height:24px;vertical-align:middle;margin:0 8px;"></span>
+            <button id="honkBtn" class="btn btn-action"> Honk</button>
             <button id="mateBtn" class="btn btn-action"> Hatch </button>
             <button id="hideAllBtn" class="btn btn-action"> Hide </button>
-            <button id="honkBtn" class="btn btn-action"> Honk</button>
         </div>
         <div class="controls">
             <span class="migration-inline-label"> Migration:</span>
-            <button id="migrateNorth" class="btn btn-direction" data-direction="north">⬆️ North</button>
-            <button id="migrateSouth" class="btn btn-direction" data-direction="south">⬇️ South</button>
-            <button id="migrateEast" class="btn btn-direction" data-direction="east">➡️ East</button>
-            <button id="migrateWest" class="btn btn-direction" data-direction="west">⬅️ West</button>
             <button id="fastMigrateToggle" class="btn btn-action">Short Flight</button>
+            <button id="migrateNorth" class="btn btn-direction" data-direction="north">↑ North</button>
+            <button id="migrateSouth" class="btn btn-direction" data-direction="south">↓ South</button>
+            <button id="migrateEast" class="btn btn-direction" data-direction="east">→ East</button>
+            <button id="migrateWest" class="btn btn-direction" data-direction="west">← West</button>
         </div>
 
         <div class="sim-info-footer">
@@ -118,7 +122,7 @@
             <ul>
                 <li>🐥 <strong> Eggs </strong> hatch into <strong> goslings</strong>. Goslings </strong> grow into <strong> adult geese</strong>. </li>
                 <li>🐣 Use <strong>Hatch</strong> button to lay eggs.  </li>
-                <li>🦊 Use <strong> Hide </strong> button to avoid <strong> predators </strong>, fox and eagles. </li>
+                <li>🦊 Use <strong> Hide </strong> button to avoid <strong> predators </strong> (foxes and eagles). </li>
                 <li>🔊 <strong> HONK </strong> at predators to try to scare them away. </li>
                 <li>🧭 <strong>Migrate</strong> when vegetation gets sparse with short or long fligts. </li>
                 <li>⚡ Long flights, storms or bad habitats may affect <strong>Health</strong>. Low health affects survival rates. </li>
@@ -133,6 +137,30 @@
                 <li></li>
             </ul>
             <button class="modal-start-btn" id="startGameBtn">Let's Go! 🪿</button>
+        </div>
+    </div>
+
+    <!-- Game Over / Submit Score Modal -->
+    <div class="modal-overlay hidden" id="scoreModal">
+        <div class="modal-box">
+            <h3>Game Over!</h3>
+            <p id="scoreModalText"></p>
+            <input id="usernameInput" type="text" maxlength="20" placeholder="Enter username (letters, numbers, _)" style="width:100%;padding:8px;margin:10px 0;font-size:16px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+            <div id="scoreModalError" style="color:#e74c3c;font-size:13px;min-height:18px;"></div>
+            <button id="submitScoreBtn" class="modal-start-btn">Submit Score</button>
+            <button id="skipScoreBtn" style="background:none;border:none;color:#888;cursor:pointer;margin-top:8px;display:block;width:100%;">Skip</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div class="modal-overlay hidden" id="leaderboardModal">
+        <div class="modal-box">
+            <h3>Leaderboard</h3>
+            <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+                <thead><tr style="border-bottom:2px solid #333;"><th style="text-align:left;padding:6px;">Rank</th><th style="text-align:left;padding:6px;">Username</th><th style="text-align:right;padding:6px;">Score</th></tr></thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+            <button class="modal-start-btn" id="closeLeaderboardBtn" style="margin-top:16px;">Close</button>
         </div>
     </div>
 

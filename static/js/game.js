@@ -296,7 +296,7 @@ export class Game {
 
         this.weatherWeeksLeft = 2 + Math.floor(Math.random() * 5);
 
-        if (this.weather === 'storm') {
+        if (this.weather === 'storm' && currentDifficulty !== 'hard') {
             this.predators.forEach(p => { p.leaving = true; });
         }
 
@@ -507,7 +507,8 @@ export class Game {
         const { spawnInterval, spawnThreshold } = DIFFICULTY_SETTINGS[currentDifficulty];
         if (this.gameTime % spawnInterval === 0 && !this.safeMode) {
             const gooseCount = this.geese.filter(g => g.state === GooseState.ADULT).length;
-            if (gooseCount > spawnThreshold && Math.random() < gooseCount / 10) {
+            const spawnChance = currentDifficulty === 'hard' ? 0.7 : gooseCount / 10;
+            if (gooseCount > spawnThreshold && Math.random() < spawnChance) {
                 const type = Math.random() < 0.5 ? PredatorType.FOX : PredatorType.EAGLE;
                 const edge = Math.floor(Math.random() * 4);
                 let x, y;

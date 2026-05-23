@@ -1,4 +1,4 @@
-import { GooseState, SIMULATION_PARAMS, clamp, randomNormal } from './constants.js';
+import { GooseState, SIMULATION_PARAMS, clamp, randomNormal, currentDifficulty } from './constants.js';
 import { getClimateZone } from './climate.js';
 
 export class Goose {
@@ -19,8 +19,8 @@ export class Goose {
             this.weeksLeft = weeksLeft;
         }
 
-        this.vx          = Math.random() * 1.2 - 0.6;
-        this.vy          = Math.random() * 1.2 - 0.6;
+        this.vx          = Math.random() * 0.2 - 0.1;
+        this.vy          = Math.random() * 0.2 - 0.1;
         // Images face LEFT by default. facingLeft=true → no flip. facingLeft=false → flip.
         this.facingLeft  = true;
         this.health      = 100;
@@ -91,14 +91,17 @@ export class Goose {
             this.vx = dx / 20 + Math.random() * 0.6 - 0.3;
             this.vy = dy / 20 + Math.random() * 0.6 - 0.3;
         } else {
-            if (Math.random() < 0.05) {
-                this.vx += Math.random() - 0.5;
-                this.vy += Math.random() - 0.5;
+            if (Math.random() < 0.04) {
+                this.vx += Math.random() * 0.12 - 0.06;
+                this.vy += Math.random() * 0.12 - 0.06;
             }
-            if (this.energy < 100) this.energy = Math.min(100, this.energy + 0.1);
+            this.vx *= 0.98;
+            this.vy *= 0.98;
+            const regenRate = currentDifficulty === 'hard' ? 0.03 : currentDifficulty === 'normal' ? 0.07 : 0.1;
+            if (this.energy < 100) this.energy = Math.min(100, this.energy + regenRate);
         }
 
-        const maxSpeed = this.state === GooseState.GOSLING ? 0.7 : 0.9;
+        const maxSpeed = this.state === GooseState.GOSLING ? 0.2 : 0.25;
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > maxSpeed) {
             this.vx = (this.vx / speed) * maxSpeed;

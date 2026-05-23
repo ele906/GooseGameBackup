@@ -44,3 +44,6 @@ Thumbs.db
 # Node / Cloudflare
 node_modules/
 .wrangler/
+
+# Admin
+admin.html

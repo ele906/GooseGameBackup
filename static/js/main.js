@@ -5,6 +5,14 @@ import {
 import { Game } from './game.js';
 
 let game;
+let scoreSubmitted = false;
+let submitScore = null;
+let getTopScores = null;
+
+import('./leaderboard.js').then(m => {
+    submitScore = m.submitScore;
+    getTopScores = m.getTopScores;
+}).catch(err => console.warn('Leaderboard unavailable:', err));
 
 window.addEventListener('load', () => {
     const size = getResponsiveCanvasSize();
@@ -17,7 +25,23 @@ window.addEventListener('load', () => {
     game = new Game(canvas);
     window.game = game;
 
+    const keysHeld = new Set();
+    const arrowKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+    window.addEventListener('keydown', e => { if (arrowKeys.has(e.key)) { keysHeld.add(e.key); e.preventDefault(); } });
+    window.addEventListener('keyup',   e => keysHeld.delete(e.key));
+
     function gameLoop() {
+        if (!game.paused && keysHeld.size) {
+            const moveSpeed = 4;
+            const movable = game.geese.filter(g => g.state === GooseState.ADULT && !g.hatching);
+            movable.forEach(g => {
+                g.vx = 0; g.vy = 0;
+                if (keysHeld.has('ArrowLeft'))  { g.x = Math.max(50, g.x - moveSpeed); g.facingLeft = true; }
+                if (keysHeld.has('ArrowRight')) { g.x = Math.min(game.width - 50, g.x + moveSpeed); g.facingLeft = false; }
+                if (keysHeld.has('ArrowUp'))    g.y = Math.max(50, g.y - moveSpeed);
+                if (keysHeld.has('ArrowDown'))  g.y = Math.min(game.height - 50, g.y + moveSpeed);
+            });
+        }
         game.update();
         game.draw();
         requestAnimationFrame(gameLoop);
@@ -77,50 +101,6 @@ window.addEventListener('load', () => {
         game.fastMigration = !game.fastMigration;
         document.getElementById('fastMigrateToggle').textContent =
             game.fastMigration ? 'Long Flight' : 'Short Flight';
-    });
-
-    window.addEventListener('keydown', (e) => {
-        if (game.paused) return;
-        const moveSpeed = 15;
-        const movable = game.geese.filter(g =>
-                g.state === GooseState.ADULT && !g.hatching
-            );
-        if (!movable.length) return;
-
-        // Flock centroid — stragglers get extra pull toward the center
-        const cx = movable.reduce((s, g) => s + g.x, 0) / movable.length;
-        const cy = movable.reduce((s, g) => s + g.y, 0) / movable.length;
-        const cohesion = 0.35; // how strongly outliers are pulled in
-
-        switch (e.key) {
-            case 'ArrowUp':
-                movable.forEach(g => {
-                    const pull = Math.max(0, g.y - cy) * cohesion;
-                    g.y = Math.max(50, g.y - (moveSpeed + pull));
-                });
-                e.preventDefault(); break;
-            case 'ArrowDown':
-                movable.forEach(g => {
-                    const pull = Math.max(0, cy - g.y) * cohesion;
-                    g.y = Math.min(game.height - 50, g.y + (moveSpeed + pull));
-                });
-                e.preventDefault(); break;
-            case 'ArrowLeft':
-                movable.forEach(g => {
-                    g.facingLeft = true;
-                    g.x = Math.max(50, g.x - moveSpeed);
-                });
-                e.preventDefault();
-                break;
-
-            case 'ArrowRight':
-                movable.forEach(g => {
-                    g.facingLeft = false;
-                    g.x = Math.min(game.width - 50, g.x + moveSpeed);
-                });
-                e.preventDefault();
-                break;
-        }
     });
 
     // Instructions → Difficulty → Countdown flow
@@ -203,5 +183,62 @@ window.addEventListener('load', () => {
 
     document.getElementById('closeModal').addEventListener('click', closeInstructions);
     document.getElementById('startGameBtn').addEventListener('click', closeInstructions);
-    document.getElementById('resetBtn').addEventListener('click', () => showDifficultyModal(true));
+    document.getElementById('exitGameBtn').addEventListener('click', () => {
+        if (!game.paused && !game.gameOver) game.gameOver = true;
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        scoreSubmitted = false;
+        showDifficultyModal(true);
+    });
+
+    // Show score submit modal when game ends
+    function checkGameOver() {
+        if (game.gameOver && !scoreSubmitted) {
+            scoreSubmitted = true;
+            const survivedWeeks = Math.floor(game.gameTime / 120);
+            document.getElementById('scoreModalText').textContent =
+                `You survived ${survivedWeeks} week${survivedWeeks === 1 ? '' : 's'}! Submit your score?`;
+            document.getElementById('scoreModal').classList.remove('hidden');
+        }
+        requestAnimationFrame(checkGameOver);
+    }
+    requestAnimationFrame(checkGameOver);
+
+    document.getElementById('submitScoreBtn').addEventListener('click', async () => {
+        const raw = document.getElementById('usernameInput').value.trim();
+        const clean = raw.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20);
+        const errorEl = document.getElementById('scoreModalError');
+        if (!clean) { errorEl.textContent = 'Username can only contain letters, numbers and _.'; return; }
+        if (!submitScore) { errorEl.textContent = 'Leaderboard not available right now.'; return; }
+        errorEl.textContent = '';
+        document.getElementById('submitScoreBtn').textContent = 'Submitting...';
+        try {
+            await submitScore(clean, game.score);
+            document.getElementById('scoreModal').classList.add('hidden');
+        } catch {
+            errorEl.textContent = 'Failed to submit, try again.';
+            document.getElementById('submitScoreBtn').textContent = 'Submit Score';
+        }
+    });
+
+    document.getElementById('skipScoreBtn').addEventListener('click', () => {
+        document.getElementById('scoreModal').classList.add('hidden');
+    });
+
+    // Leaderboard viewer
+    document.getElementById('leaderboardBtn').addEventListener('click', async () => {
+        const body = document.getElementById('leaderboardBody');
+        document.getElementById('leaderboardModal').classList.remove('hidden');
+        if (!getTopScores) { body.innerHTML = '<tr><td colspan="3" style="padding:6px;color:#888">Leaderboard not available.</td></tr>'; return; }
+        body.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+        const scores = await getTopScores(10);
+        body.innerHTML = scores.length ? scores.map((s, i) =>
+            `<tr><td style="padding:6px">${i + 1}</td><td style="padding:6px">${s.username}</td><td style="text-align:right;padding:6px">${s.score}</td></tr>`
+        ).join('') : '<tr><td colspan="3" style="padding:6px;color:#888">No scores yet!</td></tr>';
+    });
+
+    document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+        document.getElementById('leaderboardModal').classList.add('hidden');
+    });
 });
