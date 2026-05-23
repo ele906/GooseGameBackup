@@ -167,15 +167,28 @@ export class Game {
     startBGM() {
         const map = { easy: 'bgmEasy', normal: 'bgmMed', hard: 'bgmHard' };
         const s = this.sounds[map[currentDifficulty] || 'bgmMed'];
-        if (!s) return;
-        if (this.bgmAudio) { this.bgmAudio.pause(); this.bgmAudio.currentTime = 0; }
+
+        if (!s) {
+            console.log('No BGM sound found for difficulty:', currentDifficulty);
+            return;
+        }
+
+        if (this.bgmAudio) {
+            this.bgmAudio.pause();
+            this.bgmAudio.currentTime = 0;
+        }
+
         s.loop = true;
-        s.volume = 0.45;
+        s.volume = 1.0;
         s.currentTime = 0;
-        s.play().catch(() => {});
+
+        s.play()
+            .then(() => console.log('BGM playing:', s.src))
+            .catch(err => console.log('BGM failed:', err, s.src));
+
         this.bgmAudio = s;
     }
-
+    
     stopBGM() {
         if (this.bgmAudio) {
             this.bgmAudio.pause();
