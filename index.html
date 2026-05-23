@@ -18,10 +18,6 @@
             </div>
         </header>
 
-        <div class="event-log" id="eventLog">
-            <div class="event-message">🎮 Game started! Safe period: 10 seconds</div>
-        </div>
-
         <div class="info-panel">
             <div class="info-box">
                 <h4>📍 Location</h4>
@@ -39,6 +35,10 @@
                 <h4>💚 Survival Rate</h4>
                 <div id="survivalRate">100%</div>
             </div>
+        </div>
+
+        <div class="event-log" id="eventLog">
+            <div class="event-message">🎮 Game started! Safe period: 10 seconds</div>
         </div>
 
         <div class="game-wrapper">
@@ -69,8 +69,13 @@
             </div>
         </div>
 
-        <div class="instructions">
-            <h3>🎮 How to Play:</h3>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="modal-overlay" id="instructionsModal">
+        <div class="modal-box">
+            <button class="modal-close" id="closeModal" aria-label="Close">&#x2715;</button>
+            <h3>🎮 How to Play</h3>
             <ul>
                 <li>🥚 Eggs hatch into goslings (85% survival rate - affected by latitude!)</li>
                 <li>🐥 Goslings grow into adults (70% base survival - climate matters!)</li>
@@ -80,23 +85,20 @@
                 <li>💕 Use "Mate" button to breed (80% success rate, requires energy)</li>
                 <li>🧭 <strong>Migrate North/South/East/West</strong> - changes latitude/longitude!</li>
                 <li>🌡️ <strong>Climate zones affect survival</strong>:
-                    <ul style="margin-top: 5px; font-size: 0.95em;">
+                    <ul>
                         <li>❄️ Temperate (30-50°N): <strong>Best survival (100%)</strong></li>
                         <li>🌨️ Subarctic/Subtropical: <strong>Good (80-85%)</strong></li>
-                        <li>🧊 Arctic/🌴 Tropical: <strong>Harsh (60-70%)</strong></li>
+                        <li>🧊 Arctic / 🌴 Tropical: <strong>Harsh (60-70%)</strong></li>
                         <li>🧊 Antarctic: <strong>Extreme (50%)</strong></li>
                     </ul>
                 </li>
                 <li>⚡ Energy affects survival - watch it during migration!</li>
                 <li>⛈️ Random storms can hit at any latitude</li>
             </ul>
-            
-            <div style="margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
-                <h4 style="margin-bottom: 10px;">🎲 Stochastic Simulation Features:</h4>
-                <p style="margin: 5px 0; color: #555;">
-                    This game uses <strong>Monte Carlo methods</strong> and <strong>geographic modeling</strong>:
-                </p>
-                <ul style="margin-top: 10px;">
+            <div class="modal-sim-box">
+                <h4>🎲 Stochastic Simulation Features:</h4>
+                <p>This game uses <strong>Monte Carlo methods</strong> and <strong>geographic modeling</strong>:</p>
+                <ul>
                     <li>🪿 Latitude-based survival probabilities (like real goose migration!)</li>
                     <li>🗺️ Directional migration changes your location and climate zone</li>
                     <li>💕 Breeding success depends on energy levels and random chance</li>
@@ -105,6 +107,7 @@
                     <li>⛈️ Random environmental events (storms) can strike anywhere</li>
                 </ul>
             </div>
+            <button class="modal-start-btn" id="startGameBtn">Let's Go! 🪿</button>
         </div>
     </div>
 

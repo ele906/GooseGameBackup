@@ -1301,4 +1301,41 @@ window.addEventListener('load', () => {
                 break;
         }
     });
+
+    // --- Instructions modal + countdown ---
+    game.paused = true;
+
+    function startCountdown() {
+        const wrapper = document.querySelector('.game-wrapper');
+        const overlay = document.createElement('div');
+        overlay.className = 'countdown-overlay';
+        wrapper.appendChild(overlay);
+
+        const counts = ['3', '2', '1', 'GO!'];
+        let i = 0;
+
+        function showNext() {
+            overlay.innerHTML = '';
+            if (i >= counts.length) {
+                overlay.remove();
+                game.paused = false;
+                return;
+            }
+            const el = document.createElement('div');
+            el.className = 'countdown-number';
+            el.textContent = counts[i];
+            overlay.appendChild(el);
+            i++;
+            setTimeout(showNext, 900);
+        }
+        showNext();
+    }
+
+    function closeModal() {
+        document.getElementById('instructionsModal').classList.add('hidden');
+        startCountdown();
+    }
+
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('startGameBtn').addEventListener('click', closeModal);
 });
