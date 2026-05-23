@@ -3,12 +3,11 @@ let CANVAS_WIDTH = 1000;
 let CANVAS_HEIGHT = 600;
 const FPS = 60;
 
-// Function to get responsive canvas size — reads actual rendered width so pixel dims match CSS
+// Function to get responsive canvas size
 const getResponsiveCanvasSize = () => {
-    const canvas = document.getElementById('gameCanvas');
-    const width = canvas ? canvas.clientWidth : Math.min(window.innerWidth * 0.9, 1200);
-    const height = Math.min(Math.round(width * 0.6), Math.min(window.innerHeight * 0.65, 750));
-    return { width, height };
+    const maxWidth = Math.min(window.innerWidth * 0.9, 1000);
+    const maxHeight = Math.min(window.innerHeight * 0.65, 750);
+    return { width: maxWidth, height: maxHeight };
 };
 
 // Monte Carlo simulation parameters
@@ -1153,7 +1152,11 @@ window.addEventListener('load', () => {
     const size = getResponsiveCanvasSize();
     CANVAS_WIDTH = size.width;
     CANVAS_HEIGHT = size.height;
-    
+
+    // Shrink container to match canvas width so header/panel line up
+    const container = document.querySelector('.container');
+    container.style.maxWidth = (CANVAS_WIDTH + 60) + 'px';
+
     const canvas = document.getElementById('gameCanvas');
     game = new Game(canvas);
     window.game = game;

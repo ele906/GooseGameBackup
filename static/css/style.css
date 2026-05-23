@@ -105,7 +105,8 @@ h1 {
     background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
     cursor: pointer;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    width: 100%;
+    max-width: 100%;
+    max-height: 65vh;
     display: block;
 }
 
