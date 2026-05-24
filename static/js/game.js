@@ -230,6 +230,7 @@ export class Game {
     advanceWeek() {
         this.week++;
         if (this.week > 4) { this.week = 1; this.month = (this.month + 1) % 12; }
+        if (this.breedingCooldown > 0) this.breedingCooldown--;
         this.geese.forEach(g => {
             if (g.weeksLeft > 0) g.weeksLeft--;
             if (g.state === GooseState.ADULT) {
@@ -636,6 +637,11 @@ export class Game {
     }
 
     breed() {
+        if (this.breedingCooldown > 0) {
+            this.logEvent(`🪶 Flock needs ${this.breedingCooldown} more week${this.breedingCooldown > 1 ? 's' : ''} to recover before breeding again`, 'warning');
+            return;
+        }
+
         const adultCount = this.geese.filter(g => g.state === GooseState.ADULT).length;
         const BREED_SOFT_CAP = 10;
         const BREED_HARD_CAP = 18;
@@ -707,6 +713,7 @@ export class Game {
             });
             mother.hatching = true;
             mother.breedingCooldown = SIMULATION_PARAMS.BREEDING_COOLDOWN;
+            this.breedingCooldown = 8;
         } else {
             this.logEvent(`💔 Hatch failed — bad luck this time`, 'warning');
         }
