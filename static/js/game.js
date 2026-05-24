@@ -296,9 +296,9 @@ export class Game {
             if (this.weeksAtLocation > 0) this.weeksAtLocation = Math.max(0, this.weeksAtLocation - 1);
         }
 
-        // Overcrowding pressure — large flocks burn through habitat fast
+        // Overcrowding pressure — large flocks burn through habitat fast (grace period: 4 weeks)
         const overcrowdLimit = 12;
-        if (adultCount > overcrowdLimit) {
+        if (adultCount > overcrowdLimit && this.weeksAtLocation >= 4) {
             const excess = adultCount - overcrowdLimit;
             const crowdDrain = Math.min(6, Math.floor(excess * 0.6));
             this.geese.forEach(g => {
