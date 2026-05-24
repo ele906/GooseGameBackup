@@ -237,6 +237,7 @@ window.addEventListener('load', () => {
     document.getElementById('playAgainBtn').addEventListener('click', () => {
         document.getElementById('scoreModal').classList.add('hidden');
         document.getElementById('scoreSubmitForm').style.display = '';
+        document.getElementById('scoreModalText').textContent = '';
         document.getElementById('submitScoreBtn').textContent = 'Submit Score';
         document.getElementById('usernameInput').value = '';
         document.getElementById('scoreModalError').textContent = '';
