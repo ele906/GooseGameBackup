@@ -91,9 +91,10 @@ export class Game {
         this.lightningX      = 0;
         this.lightningPoints = [];
 
-        this.fastMigration   = false;
+        this.fastMigration      = false;
         this.weeksAtLocation    = 0;
-        this.vegWarnThreshold = 10 + Math.floor(Math.random() * 7);
+        this.vegWarnThreshold   = 10 + Math.floor(Math.random() * 7);
+        this.loneGooseCooldown  = 100 + Math.floor(Math.random() * 51);
 
         const ls = (src) => { const a = new Audio(src); a.preload = 'auto'; return a; };
         this.sounds = {
@@ -322,6 +323,14 @@ export class Game {
             }
         }
 
+        // Lone goose event
+        if (this.loneGooseCooldown > 0) {
+            this.loneGooseCooldown--;
+        } else {
+            this.spawnLoneGoose();
+            this.loneGooseCooldown = 20 + Math.floor(Math.random() * 21);
+        }
+
         // Pandemic — large flocks risk disease spreading
         if (adultCount > 15 && Math.random() < 0.03) {
             const casualties = 1 + Math.floor(Math.random() * 3);
@@ -516,6 +525,21 @@ export class Game {
             this.stormShakeX = 0; this.stormShakeY = 0; this.lightningFlash = 0;
         }
 
+        // Guide lone geese toward their target, re-asserting migrating each frame to prevent dropout
+        for (const g of this.geese) {
+            if (!g.loneGoose) continue;
+            const dx = g.loneGooseTarget.x - g.x;
+            const dy = g.loneGooseTarget.y - g.y;
+            if (Math.sqrt(dx * dx + dy * dy) <= 80) {
+                g.loneGoose = false;
+                g.migrating = false;
+                this.logEvent('🪿 The lone goose has joined your flock! Honk!', 'positive');
+            } else {
+                g.migrating = true;
+                g.migrationTarget = g.loneGooseTarget;
+            }
+        }
+
         this.geese.forEach(g => g.move(this.width, this.height, this.geese));
         this.predators.forEach(p => p.move(this.width, this.height, this.geese));
 
@@ -708,8 +732,12 @@ export class Game {
             return;
         }
 
-        if (allMales.length === 0 || allFemales.length === 0) {
-            this.logEvent(`💔 Hatch failed — not enough geese in the flock`, 'warning');
+        if (allMales.length === 0) {
+            this.logEvent(`💔 No male geese in the flock!`, 'warning');
+            return;
+        }
+        if (allFemales.length === 0) {
+            this.logEvent(`💔 No female geese in the flock!`, 'warning');
             return;
         }
         if (males.length === 0 || females.length === 0) {
@@ -784,6 +812,41 @@ export class Game {
         if (event.type === 'warning')   className += ' warning';
         if (event.type === 'fun')       className += ' fun';
         logElement.innerHTML = `<div class="${className}">${event.message}</div>`;
+    }
+
+    getFlockCentroid() {
+        const adults = this.geese.filter(g => g.state === GooseState.ADULT && !g.loneGoose);
+        if (adults.length === 0) return { x: this.width / 2, y: this.height / 2 };
+        return {
+            x: adults.reduce((s, g) => s + g.x, 0) / adults.length,
+            y: adults.reduce((s, g) => s + g.y, 0) / adults.length,
+        };
+    }
+
+    spawnLoneGoose() {
+        const edge = Math.floor(Math.random() * 4);
+        let sx, sy;
+        if      (edge === 0) { sx = Math.random() * this.width;  sy = 0; }
+        else if (edge === 1) { sx = this.width;                  sy = Math.random() * this.height; }
+        else if (edge === 2) { sx = Math.random() * this.width;  sy = this.height; }
+        else                 { sx = 0;                           sy = Math.random() * this.height; }
+
+        const gender = Math.random() < 0.5 ? 'male' : 'female';
+        const goose = new Goose(GooseState.ADULT, 0, sx, sy, gender);
+        goose.game = this;
+        goose.loneGoose = true;
+
+        const c = this.getFlockCentroid();
+        goose.loneGooseTarget = {
+            x: clamp(c.x + (Math.random() - 0.5) * 120, 80, this.width  - 80),
+            y: clamp(c.y + (Math.random() - 0.5) * 120, 80, this.height - 80),
+        };
+        goose.migrating       = true;
+        goose.migrationTarget = goose.loneGooseTarget;
+
+        this.geese.push(goose);
+        const dirs = ['north', 'east', 'south', 'west'];
+        this.logEvent(`🪿 A lone ${gender} goose is approaching from the ${dirs[edge]}!`, 'positive');
     }
 
     showFunFact(category = 'general') {
@@ -1195,7 +1258,8 @@ export class Game {
         this.lightningFlash = 0; this.lightningPoints = [];
         this.fastMigration    = false;
         this.weeksAtLocation  = 0;
-        this.vegWarnThreshold = 4 + Math.floor(Math.random() * 5);
+        this.vegWarnThreshold  = 10 + Math.floor(Math.random() * 7);
+        this.loneGooseCooldown = 100 + Math.floor(Math.random() * 51);
         this.stopAmbient();
         this.stopBGM();
         this.ambientStarted = false;
