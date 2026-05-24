@@ -65,6 +65,11 @@ header {
     color: #ff6a00;
 }
 
+.event-message.fun {
+    color: #7b2d8b;
+    font-style: italic;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;

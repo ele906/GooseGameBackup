@@ -121,6 +121,7 @@ export class Game {
             goodnews:  ls('static/audio/goodnews.mp3'),
             warning:   ls('static/audio/warning.mp3'),
             alert:     ls('static/audio/alert.mp3'),
+            fun:       ls('static/audio/fun.mp3'),
         };
         this.ambientAudio   = null;
         this.bgmAudio       = null;
@@ -230,6 +231,7 @@ export class Game {
     advanceWeek() {
         this.week++;
         if (this.week > 4) { this.week = 1; this.month = (this.month + 1) % 12; }
+        if (Math.random() < 0.08) this.showFunFact('general');
         if (this.breedingCooldown > 0) this.breedingCooldown--;
         this.geese.forEach(g => {
             if (g.weeksLeft > 0) g.weeksLeft--;
@@ -715,6 +717,7 @@ export class Game {
                 this.totalBorn++;
             }
             this.logEvent(`💕 Hatching successful! ${clutchSize} egg${clutchSize > 1 ? 's' : ''} laid`, 'positive');
+            setTimeout(() => this.showFunFact('hatch'), 2500);
             mother.energy = Math.max(10, mother.energy - 35);
             this.geese.forEach(g => {
                 if (g.state === GooseState.ADULT && g !== mother)
@@ -740,6 +743,7 @@ export class Game {
         if (type === 'positive')       this.playNotification('static/audio/goodnews.mp3');
         else if (type === 'warning')   this.playNotification('static/audio/warning.mp3');
         else if (type === 'important') this.playNotification('static/audio/alert.mp3');
+        else if (type === 'fun')       this.playSound('fun');
     }
 
     updateEventLog() {
@@ -750,10 +754,67 @@ export class Game {
         if (event.type === 'important') className += ' important';
         if (event.type === 'positive')  className += ' positive';
         if (event.type === 'warning')   className += ' warning';
+        if (event.type === 'fun')       className += ' fun';
         logElement.innerHTML = `<div class="${className}">${event.message}</div>`;
     }
 
+    showFunFact(category = 'general') {
+        const facts = {
+            hatch: [
+                "🥚 Canada geese lay 2–8 eggs per clutch — the more, the merrier!",
+                "🐣 Goslings can walk, swim, and feed themselves within 24 hours of hatching!",
+                "💕 Canada geese mate for life and often return to the same nesting spot every year.",
+                "🪿 The gander (male) stands guard while the female sits on the eggs — true teamwork!",
+                "🥚 Goose eggs take about 25–28 days to hatch.",
+                "🐥 Goslings can dive underwater to dodge predators even before they can fly!",
+                "🪺 Multiple goose families sometimes merge into giant 'gang broods' to raise goslings together.",
+                "🐣 Goslings imprint on their parents within hours of hatching — they follow whoever they see first!",
+                "🦢 Young Canada geese stay with their parents for their entire first year of life.",
+                "💕 If a nest is destroyed, a goose may re-nest and try again within the same season.",
+            ],
+            migration: [
+                "🗺️ Canada geese can fly up to 1,500 miles in a single day during migration!",
+                "✈️ Flying in a V formation reduces drag — each bird gets a lift from the one ahead.",
+                "🧭 Geese navigate using the sun, stars, and Earth's magnetic field.",
+                "💨 Flying in V formation can increase a flock's range by up to 70% compared to flying solo.",
+                "🌡️ Geese decide when to migrate based on day length, not just temperature.",
+                "🦅 The lead position in a V rotates — geese take turns fighting the headwind.",
+                "🗺️ Canada geese have been recorded flying as high as 29,000 feet during migration!",
+                "🌊 Geese follow rivers, coastlines, and mountain ranges as natural navigation guides.",
+                "❄️ In autumn, Canada geese can fly over 600 miles nonstop before resting.",
+                "🌍 Some Canada goose populations have stopped migrating entirely and now live year-round in cities!",
+            ],
+            general: [
+                "🌿 Canada geese spend about half their waking day grazing on grass and aquatic plants.",
+                "📢 A goose's honk can be heard up to a mile away!",
+                "🪶 Canada geese molt every summer, losing their flight feathers and going flightless for 4–6 weeks.",
+                "👁️ Geese can sleep with one eye open, keeping half their brain alert for danger.",
+                "🏊 Canada geese are strong swimmers and can stay afloat for hours.",
+                "🦺 Geese have a special oil gland that waterproofs their feathers — they preen constantly to stay dry.",
+                "🔊 A group of geese on the ground is a 'gaggle'; in flight, it's called a 'skein'.",
+                "🌱 Geese prefer open areas near water so they can spot predators from far away.",
+                "💪 Canada geese can live up to 24 years in the wild!",
+                "🌍 Canada geese were introduced to Europe, New Zealand, and even Chile.",
+                "🦆 Despite their size, Canada geese can run at speeds of up to 5 mph on land.",
+                "🌊 Goslings learn to swim almost immediately after hatching — no swimming lessons needed!",
+            ],
+        };
+        const pool = facts[category] || facts.general;
+        const fact = pool[Math.floor(Math.random() * pool.length)];
+        this.logEvent(`💡 ${fact}`, 'fun');
+    }
+
     triggerMigration(direction) {
+        const POLE_LIMIT = 80;
+        if (direction === 'north' && this.latitude >= POLE_LIMIT) {
+            this.logEvent(`🧊 Can't fly further north — too close to the North Pole!`, 'important');
+            return;
+        }
+        if (direction === 'south' && this.latitude <= -POLE_LIMIT) {
+            this.logEvent(`🧊 Can't fly further south — too close to the South Pole!`, 'important');
+            return;
+        }
+
         this.playSound(Math.random() < 0.5 ? 'migrationhonk' : 'migrationhonk2');
         this.migrationActive    = true;
         this.migrationDirection = direction;
@@ -842,6 +903,7 @@ export class Game {
             this.regenerateTerrain();
             this.advanceWeek();
             this.logEvent(`🗺️ Migrated ${direction}! New terrain discovered.`, 'positive');
+            setTimeout(() => this.showFunFact('migration'), 2500);
             this.updateUI();
         }, 2000);
     }
@@ -1003,7 +1065,7 @@ export class Game {
     updateUI() {
         const weeks = Math.floor(this.gameTime / 120);
         const scoreDisplayEl = document.getElementById('scoreDisplay');
-        if (scoreDisplayEl) scoreDisplayEl.innerHTML = `<strong>${weeks} wk${weeks === 1 ? '' : 's'}</strong>`;
+        if (scoreDisplayEl) scoreDisplayEl.innerHTML = `<strong>${weeks}</strong>`;
 
         const latDir  = this.latitude  >= 0 ? 'N' : 'S';
         const longDir = this.longitude >= 0 ? 'E' : 'W';
@@ -1029,7 +1091,7 @@ export class Game {
         // Date
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const dateEl = document.getElementById('dateDisplay');
-        if (dateEl) dateEl.textContent = `${MONTHS[this.month]} Week ${this.week}`;
+        if (dateEl) dateEl.innerHTML = `${MONTHS[this.month]}<br>Week ${this.week}`;
 
         // Avg Health (energy)
         const adults   = this.geese.filter(g => g.state === GooseState.ADULT);
