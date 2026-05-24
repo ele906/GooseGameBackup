@@ -112,6 +112,7 @@ window.addEventListener('load', () => {
         game.paused = true;
 
         if (afterReset) {
+            scoreSubmitted = false;
             game.reset();
             document.getElementById('fastMigrateToggle').textContent = 'Short Flight';
         } else {
@@ -186,12 +187,15 @@ window.addEventListener('load', () => {
     document.getElementById('closeModal').addEventListener('click', closeInstructions);
     document.getElementById('startGameBtn').addEventListener('click', closeInstructions);
     document.getElementById('exitGameBtn').addEventListener('click', () => {
-        if (!game.paused && !game.gameOver) game.gameOver = true;
+        if (!game.gameOver) game.gameOver = true;
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-        scoreSubmitted = false;
-        showDifficultyModal(true);
+        if (!game.gameOver) {
+            game.gameOver = true;
+        } else {
+            showDifficultyModal(true);
+        }
     });
 
     // Show score submit modal when game ends
@@ -236,7 +240,6 @@ window.addEventListener('load', () => {
         document.getElementById('submitScoreBtn').textContent = 'Submit Score';
         document.getElementById('usernameInput').value = '';
         document.getElementById('scoreModalError').textContent = '';
-        scoreSubmitted = false;
         showDifficultyModal(true);
     });
 
