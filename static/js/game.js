@@ -818,6 +818,11 @@ export class Game {
     }
 
     triggerMigration(direction) {
+        if (this.weather === 'storm') {
+            this.logEvent('⛈️ Too dangerous to fly in a storm — wait for the weather to clear!', 'warning');
+            return;
+        }
+
         const POLE_LIMIT = 80;
         if (direction === 'north' && this.latitude >= POLE_LIMIT) {
             this.logEvent(`🧊 Can't fly further north — too close to the North Pole!`, 'important');
