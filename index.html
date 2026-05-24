@@ -145,10 +145,13 @@
         <div class="modal-box">
             <h3>Game Over!</h3>
             <p id="scoreModalText"></p>
-            <input id="usernameInput" type="text" maxlength="20" placeholder="Enter username (letters, numbers, _)" style="width:100%;padding:8px;margin:10px 0;font-size:16px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
-            <div id="scoreModalError" style="color:#e74c3c;font-size:13px;min-height:18px;"></div>
-            <button id="submitScoreBtn" class="modal-start-btn">Submit Score</button>
-            <button id="skipScoreBtn" style="background:none;border:none;color:#888;cursor:pointer;margin-top:8px;display:block;width:100%;">Skip</button>
+            <div id="scoreSubmitForm">
+                <input id="usernameInput" type="text" maxlength="20" placeholder="Enter username (letters, numbers, _)" style="width:100%;padding:8px;margin:10px 0;font-size:16px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;">
+                <div id="scoreModalError" style="color:#e74c3c;font-size:13px;min-height:18px;"></div>
+                <button id="submitScoreBtn" class="modal-start-btn">Submit Score</button>
+                <button id="skipScoreBtn" style="background:none;border:none;color:#888;cursor:pointer;margin-top:8px;display:block;width:100%;">Skip</button>
+            </div>
+            <button id="playAgainBtn" class="modal-start-btn" style="margin-top:12px;">Play Again</button>
         </div>
     </div>
 

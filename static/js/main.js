@@ -74,11 +74,12 @@ window.addEventListener('load', () => {
         }
     });
 
-    document.getElementById('mateBtn').addEventListener('click', () => game.forceMating());
+    document.getElementById('mateBtn').addEventListener('click', () => { if (game.gameOver) return; game.forceMating(); });
 
     const directionButtons = ['migrateNorth', 'migrateSouth', 'migrateEast', 'migrateWest'];
     directionButtons.forEach(btnId => {
         document.getElementById(btnId).addEventListener('click', () => {
+            if (game.gameOver) return;
             const direction = document.getElementById(btnId).dataset.direction;
             game.triggerMigration(direction);
             directionButtons.forEach(id => document.getElementById(id).classList.remove('active'));
@@ -87,8 +88,8 @@ window.addEventListener('load', () => {
         });
     });
 
-    document.getElementById('hideAllBtn').addEventListener('click', () => game.hideAllGeese());
-    document.getElementById('honkBtn').addEventListener('click', () => game.honk());
+    document.getElementById('hideAllBtn').addEventListener('click', () => { if (game.gameOver) return; game.hideAllGeese(); });
+    document.getElementById('honkBtn').addEventListener('click', () => { if (game.gameOver) return; game.honk(); });
 
     function lockDiffButtons() { ['diffEasy', 'diffNormal', 'diffHard'].forEach(id => document.getElementById(id).disabled = true); }
     lockDiffButtons();
@@ -98,6 +99,7 @@ window.addEventListener('load', () => {
     });
 
     document.getElementById('fastMigrateToggle').addEventListener('click', () => {
+        if (game.gameOver) return;
         game.fastMigration = !game.fastMigration;
         document.getElementById('fastMigrateToggle').textContent =
             game.fastMigration ? 'Long Flight' : 'Short Flight';
@@ -215,7 +217,8 @@ window.addEventListener('load', () => {
         document.getElementById('submitScoreBtn').textContent = 'Submitting...';
         try {
             await submitScore(clean, game.score, currentDifficulty);
-            document.getElementById('scoreModal').classList.add('hidden');
+            document.getElementById('scoreSubmitForm').style.display = 'none';
+            document.getElementById('scoreModalText').textContent = '🎉 Score submitted! Ready to play again?';
         } catch {
             errorEl.textContent = 'Failed to submit, try again.';
             document.getElementById('submitScoreBtn').textContent = 'Submit Score';
@@ -223,7 +226,18 @@ window.addEventListener('load', () => {
     });
 
     document.getElementById('skipScoreBtn').addEventListener('click', () => {
+        document.getElementById('scoreSubmitForm').style.display = 'none';
+        document.getElementById('scoreModalText').textContent = 'Better luck next time! Ready to play again?';
+    });
+
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
         document.getElementById('scoreModal').classList.add('hidden');
+        document.getElementById('scoreSubmitForm').style.display = '';
+        document.getElementById('submitScoreBtn').textContent = 'Submit Score';
+        document.getElementById('usernameInput').value = '';
+        document.getElementById('scoreModalError').textContent = '';
+        scoreSubmitted = false;
+        showDifficultyModal(true);
     });
 
     // Leaderboard viewer
