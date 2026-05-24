@@ -128,10 +128,16 @@ export class Game {
             fun:       ls('static/audio/fun.mp3'),
             fox:       ls('static/audio/fox.mp3'),
         };
+
+        // Lower SFX so BGM stays audible
+        ['happyhonk','migrationhonk','migrationhonk2',
+         'angryhonk1','angryhonk2','angryhonk3','angryhonk4','angryhonk5',
+         'eagle','fox'].forEach(k => { if (this.sounds[k]) this.sounds[k].volume = 0.35; });
+
         this.ambientAudio   = null;
         this.bgmAudio       = null;
         this.ambientStarted = false;
-        this.bgmVariant     = Math.random() < 0.5 ? '' : '2';
+        this.bgmVariant     = null;
         this.lastNotifTime  = {};
 
         this.init();
@@ -231,8 +237,38 @@ export class Game {
         this.predators.forEach(p => {
             if (!p.leaving && Math.random() < scarePct) { p.leaving = true; scared++; }
         });
-        if (scared > 0) this.logEvent(`📢 HONK! Scared off ${scared} predator${scared > 1 ? 's' : ''}!`, 'positive');
-        else            this.logEvent('📢 HONK! Predators unimpressed...', 'normal');
+        if (scared > 0) {
+            const hidingAdults = this.geese.filter(g => g.state === GooseState.ADULT && g.hiding);
+            const exposedAdults = this.geese.filter(g => g.state === GooseState.ADULT && !g.hiding);
+            const fromBush = hidingAdults.length > 0 && exposedAdults.length === 0;
+
+            if (fromBush) {
+                const bushMsgs = [
+                    `🌳 HONK from the shadows! ${scared} predator${scared > 1 ? 's' : ''} fled — mystery is power.`,
+                    `🌳 Spooked ${scared} predator${scared > 1 ? 's' : ''} from the bushes — they never saw it coming!`,
+                    `🌳 A disembodied HONK echoed through the bushes. ${scared} predator${scared > 1 ? 's' : ''} noped out.`,
+                ];
+                this.logEvent(bushMsgs[Math.floor(Math.random() * bushMsgs.length)], 'positive');
+            } else {
+                const boldMsgs = [
+                    `📢 FEARLESS HONK! Scared off ${scared} predator${scared > 1 ? 's' : ''}! This is YOUR land!`,
+                    `📢 TERRITORIAL HONK! ${scared} predator${scared > 1 ? 's' : ''} fled before your fury!`,
+                    `📢 HONK HONK HONK! ${scared} predator${scared > 1 ? 's' : ''} scattered — nobody messes with this flock!`,
+                    `📢 DOMINANT HONK! You stood your ground and sent ${scared} predator${scared > 1 ? 's' : ''} running!`,
+                ];
+                this.logEvent(boldMsgs[Math.floor(Math.random() * boldMsgs.length)], 'positive');
+                // Confidence boost — geese feel pumped after defending their territory
+                exposedAdults.forEach(g => { g.energy = Math.min(100, g.energy + 5); });
+            }
+        } else {
+            const missedMsgs = [
+                '📢 You honked into the void. Silence.',
+                '📢 HONK! ...no response. They don\'t care.',
+                '📢 A brave honk. The predators were unmoved.',
+                '📢 HONK! Crickets.',
+            ];
+            this.logEvent(missedMsgs[Math.floor(Math.random() * missedMsgs.length)], 'normal');
+        }
     }
 
     advanceWeek() {
@@ -329,7 +365,7 @@ export class Game {
             this.loneGooseCooldown--;
         } else {
             this.spawnLoneGoose();
-            this.loneGooseCooldown = 20 + Math.floor(Math.random() * 21);
+            this.loneGooseCooldown = 25 + Math.floor(Math.random() * 23);
         }
 
         // Pandemic — large flocks risk disease spreading
@@ -1267,7 +1303,7 @@ export class Game {
         this.stopAmbient();
         this.stopBGM();
         this.ambientStarted = false;
-        this.bgmVariant     = Math.random() < 0.5 ? '' : '2';
+        this.bgmVariant     = null;
         this.eventLog = [];
         this.logEvent('🎮 Game started! Safe period: 10 seconds', 'positive');
         this.init();
