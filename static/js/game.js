@@ -1003,7 +1003,7 @@ export class Game {
     updateUI() {
         const weeks = Math.floor(this.gameTime / 120);
         const scoreDisplayEl = document.getElementById('scoreDisplay');
-        if (scoreDisplayEl) scoreDisplayEl.textContent = `${weeks} wk${weeks === 1 ? '' : 's'}`;
+        if (scoreDisplayEl) scoreDisplayEl.innerHTML = `<strong>${weeks} wk${weeks === 1 ? '' : 's'}</strong>`;
 
         const latDir  = this.latitude  >= 0 ? 'N' : 'S';
         const longDir = this.longitude >= 0 ? 'E' : 'W';
@@ -1029,7 +1029,7 @@ export class Game {
         // Date
         const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const dateEl = document.getElementById('dateDisplay');
-        if (dateEl) dateEl.innerHTML = `<strong>${MONTHS[this.month]} Week ${this.week}</strong>`;
+        if (dateEl) dateEl.textContent = `${MONTHS[this.month]} Week ${this.week}`;
 
         // Avg Health (energy)
         const adults   = this.geese.filter(g => g.state === GooseState.ADULT);
