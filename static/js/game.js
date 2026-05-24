@@ -126,6 +126,7 @@ export class Game {
             warning:   ls('static/audio/warning.mp3'),
             alert:     ls('static/audio/alert.mp3'),
             fun:       ls('static/audio/fun.mp3'),
+            fox:       ls('static/audio/fox.mp3'),
         };
         this.ambientAudio   = null;
         this.bgmAudio       = null;
@@ -137,11 +138,11 @@ export class Game {
         canvas.addEventListener('click', (e) => this.handleClick(e));
     }
 
-    playSound(name) {
+    playSound(name, startTime = 0) {
         try {
             const s = this.sounds[name];
             if (!s) return;
-            s.currentTime = 0;
+            s.currentTime = startTime;
             s.play().catch(() => {});
         } catch(e) {}
     }
@@ -373,8 +374,8 @@ export class Game {
 
         this.startAmbientForWeather();
 
-        const icons = { sunny: '☀️', rain: '🌧️', storm: '⛈️' };
-        const names = { sunny: 'Sunny', rain: 'Rain', storm: 'Storm!' };
+        const icons = { sunny: '☀️', rain: '🌧️', wind: '💨', storm: '⛈️' };
+        const names = { sunny: 'Sunny', rain: 'Rain', wind: 'Windy', storm: 'Storm!' };
 
         this.logEvent(`${icons[this.weather]} Weather changed: ${names[this.weather]}`,
             this.weather === 'storm' ? 'important' : 'normal');
@@ -573,6 +574,7 @@ export class Game {
                     const target = adults[0];
                     if (Math.random() < catchProb * (1 - target.survivalChance)) {
                         if (predator.type === PredatorType.EAGLE) this.playSound('eagle');
+                        else if (predator.type === PredatorType.FOX) this.playSound('fox', 2);
                         this.logEvent(`🦊 A ${predator.type} caught a goose!`, 'important');
                         this.geese.splice(this.geese.indexOf(target), 1);
                         this.totalDied++;
@@ -595,6 +597,7 @@ export class Game {
                     }
                     if (ate > 0) {
                         if (predator.type === PredatorType.EAGLE) this.playSound('eagle');
+                        else if (predator.type === PredatorType.FOX) this.playSound('fox', 2);
                         this.logEvent(`🦊 A ${predator.type} ate ${ate} gosling${ate > 1 ? 's' : ''}!`, 'important');
                         predator.eatCooldown = EAT_COOLDOWN_FRAMES;
                         continue;
@@ -1083,7 +1086,8 @@ export class Game {
                 const sunnyMsg = [
                     '☀️ Hiding on a sunny day — geese need exercise! (-3 health)',
                     '☀️ Hiding on a sunny day — geese need their vitamin D! (-3 health)',
-                    '☀️ Hiding on a sunny day — geese are too weak without migrating! (-3 health)',
+                    '☀️ Hiding on a sunny day — geese missed out to practice their flight skills! (-3 health)',
+                    '☀️ Hiding on a sunny day — geese became less fit... (-3 health)',
                 ][Math.floor(Math.random() * 3)];
                 this.logEvent(sunnyMsg, 'warning');
             }
