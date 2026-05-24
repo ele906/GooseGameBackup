@@ -115,9 +115,12 @@ export class Game {
             storm:  ls('static/audio/storm.mp3'),
             storm2: ls('static/audio/storm2.mp3'),
             // bgm
-            bgmEasy: ls('static/audio/bgm-easy.mp3'),
-            bgmMed:  ls('static/audio/bgm-med.mp3'),
-            bgmHard:   ls('static/audio/bgm-hard.mp3'),
+            bgmEasy:  ls('static/audio/bgm-easy.mp3'),
+            bgmMed:   ls('static/audio/bgm-med.mp3'),
+            bgmHard:  ls('static/audio/bgm-hard.mp3'),
+            bgmEasy2: ls('static/audio/bgm-easy2.mp3'),
+            bgmMed2:  ls('static/audio/bgm-med2.mp3'),
+            bgmHard2: ls('static/audio/bgm-hard2.mp3'),
             goodnews:  ls('static/audio/goodnews.mp3'),
             warning:   ls('static/audio/warning.mp3'),
             alert:     ls('static/audio/alert.mp3'),
@@ -126,6 +129,7 @@ export class Game {
         this.ambientAudio   = null;
         this.bgmAudio       = null;
         this.ambientStarted = false;
+        this.bgmVariant     = Math.random() < 0.5 ? '' : '2';
         this.lastNotifTime  = {};
 
         this.init();
@@ -177,12 +181,13 @@ export class Game {
     startAmbientForWeather() {
         if      (this.weather === 'sunny') this.startAmbient(Math.random() < 0.5 ? 'sunny' : 'sunny2');
         else if (this.weather === 'rain')  this.startAmbient('rain');
+        else if (this.weather === 'wind')  this.startAmbient('wind');
         else if (this.weather === 'storm') this.startAmbient(Math.random() < 0.5 ? 'storm' : 'storm2');
         else                               this.stopAmbient();
     }
 
     startBGM() {
-        const map = { easy: 'bgmEasy', normal: 'bgmMed', hard: 'bgmHard' };
+        const map = { easy: `bgmEasy${this.bgmVariant}`, normal: `bgmMed${this.bgmVariant}`, hard: `bgmHard${this.bgmVariant}` };
         const s = this.sounds[map[currentDifficulty] || 'bgmMed'];
 
         if (!s) {
@@ -273,6 +278,10 @@ export class Game {
                 }
             });
             if (goslingsExposed) this.logEvent('🌧️ Goslings struggling in the rain! Hide them!', 'warning');
+        } else if (this.weather === 'wind') {
+            const exposedGoslings = this.geese.filter(g => g.state === GooseState.GOSLING && !g.hiding);
+            exposedGoslings.forEach(g => { g.energy = Math.max(5, g.energy - 10); });
+            if (exposedGoslings.length > 0) this.logEvent('💨 Strong winds are battering the goslings! Hide them!', 'warning');
         }
 
         // Overpopulation — vegetation depletion (scales with flock size)
@@ -312,25 +321,44 @@ export class Game {
                 this.logEvent(`🌿 Habitat strained by large flock — consider migrating.`, 'warning');
             }
         }
+
+        // Pandemic — large flocks risk disease spreading
+        if (adultCount > 15 && Math.random() < 0.03) {
+            const casualties = 1 + Math.floor(Math.random() * 3);
+            const adults = this.geese.filter(g => g.state === GooseState.ADULT);
+            for (let i = 0; i < Math.min(casualties, adults.length); i++) {
+                const idx = this.geese.indexOf(adults[i]);
+                if (idx > -1) { this.geese.splice(idx, 1); this.totalDied++; }
+            }
+            this.logEvent(`🦠 Disease swept through the flock! ${casualties} goose${casualties > 1 ? 'e' : ''}s lost.`, 'important');
+        }
+
+        // Hooman kidnapping — large visible flocks attract unwanted attention
+        if (adultCount > 10 && Math.random() < 0.02) {
+            const adults = this.geese.filter(g => g.state === GooseState.ADULT && !g.hiding);
+            if (adults.length > 0) {
+                const victim = adults[Math.floor(Math.random() * adults.length)];
+                this.geese.splice(this.geese.indexOf(victim), 1);
+                this.totalDied++;
+                this.logEvent('😱 A hooman kidnapped one of your geese! HONK!', 'important');
+            }
+        }
     }
 
     changeWeather() {
     const r = Math.random();
 
     if (currentDifficulty === 'easy') {
-        // Easy: mostly sunny, rare storms
-        this.weather = r < 0.70 ? 'sunny' : r < 0.95 ? 'rain' : 'storm';
+        this.weather = r < 0.65 ? 'sunny' : r < 0.82 ? 'rain' : r < 0.95 ? 'wind' : 'storm';
         } else if (currentDifficulty === 'normal') {
-            // Normal: current-ish behavior, slightly gentler
-            this.weather = r < 0.60 ? 'sunny' : r < 0.85 ? 'rain' : 'storm';
+            this.weather = r < 0.52 ? 'sunny' : r < 0.72 ? 'rain' : r < 0.90 ? 'wind' : 'storm';
         } else {
-            // Hard: storms are more common
-            this.weather = r < 0.45 ? 'sunny' : r < 0.75 ? 'rain' : 'storm';
+            this.weather = r < 0.38 ? 'sunny' : r < 0.58 ? 'rain' : r < 0.80 ? 'wind' : 'storm';
         }
 
         this.weatherWeeksLeft = 2 + Math.floor(Math.random() * 5);
 
-        if (this.weather === 'storm' && currentDifficulty !== 'hard') {
+        if ((this.weather === 'storm' || this.weather === 'wind') && currentDifficulty !== 'hard') {
             this.predators.forEach(p => { p.leaving = true; });
         }
 
@@ -667,8 +695,8 @@ export class Game {
         const allMales   = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'male');
         const allFemales = this.geese.filter(g => g.state === GooseState.ADULT && g.gender === 'female');
         const MAX_BREED_AGE = 520; // ~10 years in weeks
-        const males   = allMales.filter(g => g.energy > 50 && g.ageWeeks < MAX_BREED_AGE);
-        const females = allFemales.filter(g => g.energy > 50 && g.breedingCooldown === 0 && !g.hatching && g.ageWeeks < MAX_BREED_AGE);
+        const males   = allMales.filter(g => g.energy > 15 && g.ageWeeks < MAX_BREED_AGE);
+        const females = allFemales.filter(g => g.energy > 15 && g.breedingCooldown === 0 && !g.hatching && g.ageWeeks < MAX_BREED_AGE);
 
         const tooOldFemales = allFemales.filter(g => g.ageWeeks >= MAX_BREED_AGE);
         if (tooOldFemales.length > 0 && females.length === 0 && allFemales.length === tooOldFemales.length) {
@@ -685,7 +713,7 @@ export class Game {
             return;
         }
         if (males.length === 0 || females.length === 0) {
-            this.logEvent(`💔 Hatch failed — geese too exhausted (health < 50%)`, 'warning');
+            this.logEvent(`💔 Hatch failed — geese too exhausted to breed`, 'warning');
             return;
         }
 
@@ -874,12 +902,20 @@ export class Game {
         }
 
         // Energy cost of migration
+        const tailwind = this.weather === 'wind' && Math.random() < 0.5;
+        const headwind = this.weather === 'wind' && !tailwind;
+        const windMult = tailwind ? 0.5 : headwind ? 1.6 : 1.0;
+
         const migrants = this.geese.filter(g => g.state === GooseState.ADULT && !g.hatching);
         if (this.fastMigration) {
-            migrants.forEach(g => { g.energy = Math.max(5, g.energy - 80); });
-            this.logEvent('⚡ Sprint! Health heavily depleted', 'warning');
+            migrants.forEach(g => { g.energy = Math.max(5, g.energy - Math.round(80 * windMult)); });
+            if (tailwind)      this.logEvent('💨 Tailwind! Sprint boosted — less energy used!', 'positive');
+            else if (headwind) this.logEvent('💨 Headwind! Sprint was brutal — extra health lost.', 'warning');
+            else               this.logEvent('⚡ Sprint! Health heavily depleted', 'warning');
         } else {
-            migrants.forEach(g => { g.energy = Math.max(15, g.energy - 20); });
+            migrants.forEach(g => { g.energy = Math.max(15, g.energy - Math.round(20 * windMult)); });
+            if (tailwind)      this.logEvent('💨 Tailwind pushed the flock along — easy flight!', 'positive');
+            else if (headwind) this.logEvent('💨 Headwind made the flight much harder.', 'warning');
         }
 
         // Goslings and eggs can't migrate — they die
@@ -1099,11 +1135,11 @@ export class Game {
         // Weather
         const weatherEl = document.getElementById('weatherDisplay');
         if (weatherEl) {
-            const wIcons = { sunny: '☀️ Sunny', rain: '🌧️ Rain', storm: '⛈️ Storm' };
-            const wColors = { sunny: '#f6d855', rain: '#7babc7', storm: '#ee0979' };
+            const wIcons  = { sunny: '☀️ Sunny', rain: '🌧️ Rain', wind: '💨 Wind', storm: '⛈️ Storm' };
+            const wColors = { sunny: '#f6d855', rain: '#7babc7', wind: '#95a5a6',  storm: '#ee0979' };
             weatherEl.textContent = wIcons[this.weather] || '☀️ Sunny';
             weatherEl.style.color = wColors[this.weather] || '';
-            weatherEl.style.fontWeight = this.weather === 'storm' ? 'bold' : 'normal';
+            weatherEl.style.fontWeight = 'bold';
         }
 
         // Date
@@ -1163,6 +1199,7 @@ export class Game {
         this.stopAmbient();
         this.stopBGM();
         this.ambientStarted = false;
+        this.bgmVariant     = Math.random() < 0.5 ? '' : '2';
         this.eventLog = [];
         this.logEvent('🎮 Game started! Safe period: 10 seconds', 'positive');
         this.init();

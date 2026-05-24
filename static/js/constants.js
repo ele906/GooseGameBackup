@@ -43,9 +43,9 @@ export const SIMULATION_PARAMS = {
 export let currentDifficulty = 'normal';
 
 export const DIFFICULTY_SETTINGS = {
-    easy:   { startPredators: 0, catchProb: 0.01, spawnThreshold: 8, spawnInterval: 2400 },
-    normal: { startPredators: 2, catchProb: 0.02, spawnThreshold: 3, spawnInterval: 1800 },
-    hard:   { startPredators: 4, catchProb: 0.04, spawnThreshold: 2, spawnInterval: 1200 },
+    easy:   { startPredators: 1, catchProb: 0.01, spawnThreshold: 4, spawnInterval: 960  },
+    normal: { startPredators: 2, catchProb: 0.02, spawnThreshold: 3, spawnInterval: 600  },
+    hard:   { startPredators: 4, catchProb: 0.04, spawnThreshold: 3, spawnInterval: 1200 },
 };
 
 export function applyDifficulty(level) {

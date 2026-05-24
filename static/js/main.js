@@ -34,6 +34,12 @@ window.addEventListener('load', () => {
 
     function gameLoop() {
         if (!game.paused && keysHeld.size) {
+            game.geese.forEach(g => {
+                if (g.state === GooseState.ADULT && g.hiding) {
+                    g.hiding = false;
+                    clearTimeout(g.hideTimer);
+                }
+            });
             const moveSpeed = 4;
             const movable = game.geese.filter(g => g.state === GooseState.ADULT && !g.hatching && !g.hiding);
             movable.forEach(g => {
