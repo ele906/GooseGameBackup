@@ -9,6 +9,7 @@ let scoreSubmitted = false;
 let submitScore = null;
 let getTopScores = null;
 let rulesMode = false;
+let rulesPausedGame = false;
 
 import('./leaderboard.js').then(m => {
     submitScore = m.submitScore;
@@ -185,6 +186,9 @@ window.addEventListener('load', () => {
         document.getElementById('startGameBtn').textContent = "Let's Go! 🪿";
         if (!rulesMode) {
             showDifficultyModal(false);
+        } else {
+            if (rulesPausedGame) game.paused = false;
+            rulesPausedGame = false;
         }
         rulesMode = false;
     }
@@ -194,6 +198,8 @@ window.addEventListener('load', () => {
 
     document.getElementById('rulesBtn').addEventListener('click', () => {
         rulesMode = true;
+        rulesPausedGame = !game.manuallyPaused && !game.gameOver;
+        if (rulesPausedGame) game.paused = true;
         document.getElementById('startGameBtn').textContent = 'Close';
         document.getElementById('instructionsModal').classList.remove('hidden');
     });

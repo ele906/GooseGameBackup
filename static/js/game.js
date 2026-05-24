@@ -1047,7 +1047,7 @@ export class Game {
         const numGoslings = this.geese.filter(g => g.state === GooseState.GOSLING).length;
         const numEggs     = this.geese.filter(g => g.state === GooseState.EGG).length;
         const popEl = document.getElementById('populationBreakdown');
-        if (popEl) popEl.textContent = `${numAdults}🪿 ${numGoslings}🐥 ${numEggs}🥚`;
+        if (popEl) popEl.innerHTML = `${numAdults}🪿<br>${numGoslings}🐥 ${numEggs}🥚`;
     }
 
     reset() {
